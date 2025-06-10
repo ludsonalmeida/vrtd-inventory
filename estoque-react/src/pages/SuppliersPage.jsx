@@ -1,4 +1,5 @@
 // src/pages/SuppliersPage.jsx
+
 import React, { useState } from 'react';
 import {
   Container,
@@ -19,9 +20,11 @@ import {
   TextField,
   CircularProgress,
 } from '@mui/material';
+
 import { useSupplier } from '../contexts/SupplierContext';
 import { useAuth } from '../contexts/AuthContext';
 import NavBarRestrita from '../components/NavBarRestrita';
+import ValidationAlert from '../components/ValidationAlert';
 
 export default function SuppliersPage() {
   const { suppliers, loading, addSupplier, updateSupplier, removeSupplier } = useSupplier();
@@ -31,27 +34,33 @@ export default function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [formValues, setFormValues] = useState({
     name: '',
+    cnpj: '',
     email: '',
     phone: '',
-    address: '',
-    notes: '',
   });
 
-  // Abrir diálogo (novo ou editar)
-  function handleOpenDialog(supplier = null) {
-    if (supplier) {
-      setEditingSupplier(supplier);
-      setFormValues({
-        name: supplier.name,
-        email: supplier.email || '',
-        phone: supplier.phone || '',
-        address: supplier.address ? JSON.stringify(supplier.address) : '',
-        notes: supplier.notes || '',
-      });
-    } else {
-      setEditingSupplier(null);
-      setFormValues({ name: '', email: '', phone: '', address: '', notes: '' });
-    }
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState(null);
+
+  // Estados para alertas de validação
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState('error');
+
+  function handleAddClick() {
+    setEditingSupplier(null);
+    setFormValues({ name: '', cnpj: '', email: '', phone: '' });
+    setOpenDialog(true);
+  }
+
+  function handleEditClick(supplier) {
+    setEditingSupplier(supplier);
+    setFormValues({
+      name: supplier.name || '',
+      cnpj: supplier.cnpj || '',
+      email: supplier.email || '',
+      phone: supplier.phone || '',
+    });
     setOpenDialog(true);
   }
 
@@ -65,15 +74,38 @@ export default function SuppliersPage() {
     setFormValues(prev => ({ ...prev, [name]: value }));
   }
 
-  // Salvar novo fornecedor ou atualizar existente
   async function handleSave() {
+    // Validações: todos os campos são obrigatórios
+    if (!formValues.name.trim()) {
+      setAlertMessage('Nome do fornecedor é obrigatório');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      return;
+    }
+    if (!formValues.cnpj.trim()) {
+      setAlertMessage('CNPJ é obrigatório');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      return;
+    }
+    if (!formValues.email.trim()) {
+      setAlertMessage('E-mail é obrigatório');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      return;
+    }
+    if (!formValues.phone.trim()) {
+      setAlertMessage('Telefone é obrigatório');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      return;
+    }
+
     const payload = {
       name: formValues.name.trim(),
+      cnpj: formValues.cnpj.trim(),
       email: formValues.email.trim(),
       phone: formValues.phone.trim(),
-      // Converter JSON da address (se for um objeto)
-      address: formValues.address ? JSON.parse(formValues.address) : {},
-      notes: formValues.notes.trim(),
     };
 
     try {
@@ -84,38 +116,47 @@ export default function SuppliersPage() {
       }
       handleCloseDialog();
     } catch (err) {
-      console.error('Erro ao salvar fornecedor:', err);
-      alert(err.response?.data?.error || 'Erro ao salvar fornecedor');
+      console.error('Erro ao salvar fornecedor:', err.response?.data || err);
+      setAlertMessage(err.response?.data?.error || 'Erro ao salvar fornecedor');
+      setAlertSeverity('error');
+      setAlertOpen(true);
     }
   }
 
-  // Confirmar exclusão
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [supplierToDelete, setSupplierToDelete] = useState(null);
+  function handleDeleteClick(supplier) {
+    setSupplierToDelete(supplier);
+    setConfirmOpen(true);
+  }
 
-  function handleDeleteClick(sup) {
-    setSupplierToDelete(sup);
-    setConfirmDeleteOpen(true);
-  }
-  async function handleConfirmDelete() {
-    await removeSupplier(supplierToDelete._id);
-    setConfirmDeleteOpen(false);
-    setSupplierToDelete(null);
-  }
   function handleCancelDelete() {
-    setConfirmDeleteOpen(false);
     setSupplierToDelete(null);
+    setConfirmOpen(false);
+  }
+
+  async function handleConfirmDelete() {
+    if (!supplierToDelete) return;
+    try {
+      await removeSupplier(supplierToDelete._id);
+    } catch (err) {
+      console.error('Erro ao remover fornecedor:', err.response?.data || err);
+      setAlertMessage(err.response?.data?.error || 'Erro ao remover fornecedor');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    }
+    setSupplierToDelete(null);
+    setConfirmOpen(false);
   }
 
   return (
     <>
       <NavBarRestrita />
+
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4">Fornecedores</Typography>
           {user.role === 'admin' && (
-            <Button variant="contained" onClick={() => handleOpenDialog()}>
-              Novo Fornecedor
+            <Button variant="contained" color="primary" onClick={handleAddClick}>
+              Adicionar Fornecedor
             </Button>
           )}
         </Box>
@@ -130,32 +171,30 @@ export default function SuppliersPage() {
               <TableHead>
                 <TableRow>
                   <TableCell>Nome</TableCell>
-                  <TableCell>Email</TableCell>
+                  <TableCell>CNPJ</TableCell>
+                  <TableCell>E-mail</TableCell>
                   <TableCell>Telefone</TableCell>
-                  <TableCell>Endereço</TableCell>
-                  <TableCell>Notas</TableCell>
                   <TableCell align="right">Ações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {suppliers.map((sup) => (
-                  <TableRow key={sup._id}>
-                    <TableCell>{sup.name}</TableCell>
-                    <TableCell>{sup.email || '-'}</TableCell>
-                    <TableCell>{sup.phone || '-'}</TableCell>
-                    <TableCell>
-                      {sup.address
-                        ? `${sup.address.street || ''} ${sup.address.city || ''}`.trim()
-                        : '-'}
-                    </TableCell>
-                    <TableCell>{sup.notes || '-'}</TableCell>
+                {suppliers.map(supplier => (
+                  <TableRow key={supplier._id}>
+                    <TableCell>{supplier.name}</TableCell>
+                    <TableCell>{supplier.cnpj}</TableCell>
+                    <TableCell>{supplier.email}</TableCell>
+                    <TableCell>{supplier.phone}</TableCell>
                     <TableCell align="right">
                       {user.role === 'admin' ? (
                         <>
-                          <Button size="small" onClick={() => handleOpenDialog(sup)}>
+                          <Button size="small" onClick={() => handleEditClick(supplier)}>
                             Editar
                           </Button>
-                          <Button size="small" color="error" onClick={() => handleDeleteClick(sup)}>
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteClick(supplier)}
+                          >
                             Excluir
                           </Button>
                         </>
@@ -172,50 +211,43 @@ export default function SuppliersPage() {
           </TableContainer>
         )}
 
-        {/* Dialog para criar/editar */}
+        {/* Diálogo de adicionar/editar */}
         <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-          <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
+          <DialogTitle>
+            {editingSupplier ? 'Editar Fornecedor' : 'Adicionar Fornecedor'}
+          </DialogTitle>
           <DialogContent>
             <TextField
-              margin="normal"
-              fullWidth
-              label="Nome"
               name="name"
+              label="Nome"
+              fullWidth
+              sx={{ mt: 2 }}
               value={formValues.name}
               onChange={handleChange}
-              required
             />
             <TextField
-              margin="normal"
+              name="cnpj"
+              label="CNPJ"
               fullWidth
-              label="Email"
+              sx={{ mt: 2 }}
+              value={formValues.cnpj}
+              onChange={handleChange}
+            />
+            <TextField
               name="email"
+              label="E-mail"
+              type="email"
+              fullWidth
+              sx={{ mt: 2 }}
               value={formValues.email}
               onChange={handleChange}
             />
             <TextField
-              margin="normal"
-              fullWidth
-              label="Telefone"
               name="phone"
+              label="Telefone"
+              fullWidth
+              sx={{ mt: 2 }}
               value={formValues.phone}
-              onChange={handleChange}
-            />
-            <TextField
-              margin="normal"
-              fullWidth
-              label="Endereço (JSON)"
-              name="address"
-              value={formValues.address}
-              onChange={handleChange}
-              helperText='Ex.: {"street":"Rua A","city":"São Paulo","state":"SP"}'
-            />
-            <TextField
-              margin="normal"
-              fullWidth
-              label="Notas"
-              name="notes"
-              value={formValues.notes}
               onChange={handleChange}
             />
           </DialogContent>
@@ -227,12 +259,21 @@ export default function SuppliersPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Dialog de confirmação de exclusão */}
-        <Dialog open={confirmDeleteOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
+        {/* Diálogo de confirmação de exclusão */}
+        <Dialog
+          open={confirmOpen}
+          onClose={handleCancelDelete}
+          maxWidth="xs"
+          fullWidth
+        >
           <DialogTitle>Confirmar Exclusão</DialogTitle>
           <DialogContent>
-            <Typography>
-              Tem certeza que quer excluir o fornecedor “{supplierToDelete?.name}”?
+            <Typography variant="body1" color="textPrimary">
+              Tem certeza que deseja excluir o fornecedor&nbsp;
+              <Typography component="span" variant="body1" fontWeight={700}>
+                "{supplierToDelete?.name}"
+              </Typography>
+              ?
             </Typography>
           </DialogContent>
           <DialogActions>
@@ -242,6 +283,14 @@ export default function SuppliersPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Alerta de validação */}
+        <ValidationAlert
+          open={alertOpen}
+          severity={alertSeverity}
+          message={alertMessage}
+          onClose={() => setAlertOpen(false)}
+        />
       </Container>
     </>
   );

@@ -1,5 +1,9 @@
 // src/pages/DashboardPage.jsx
+
 import React, { useMemo } from 'react';
+import dayjs from 'dayjs';
+import { useUnit } from '../contexts/UnitContext';
+
 import { useAuth } from '../contexts/AuthContext';
 import { useStock } from '../contexts/StockContext';
 import { useCategory } from '../contexts/CategoryContext';
@@ -15,52 +19,94 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Stack,
 } from '@mui/material';
+
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CategoryIcon from '@mui/icons-material/Category';
+import LocalBarIcon from '@mui/icons-material/LocalBar';
 
 import CategoryBarChartHorizontal from '../components/CategoryBarChartHorizontal';
 import StatusPieChart from '../components/StatusPieChart';
 import DailyCategoryStackedAreaChart from '../components/DailyCategoryStackedAreaChart';
 
 export default function DashboardPage() {
-  // ─── Hooks no topo ───
   const { user, signOut } = useAuth();
   const { stock, loading: stockLoading } = useStock();
   const { categories, loading: catLoading } = useCategory();
   const navigate = useNavigate();
-  // ──────────────────────
+  const { units } = useUnit();
 
-  // 1) Total de itens no estoque
-  const totalItems = stock.length;
-
-  // 2) Quantos estão “Baixo” (status = 'Baixo' OU quantity <= 0)
-  const lowItems = useMemo(
-    () =>
-      stock.filter((item) => {
-        if (item.status === 'Baixo') return true;
-        if (typeof item.quantity === 'number' && item.quantity <= 0) return true;
-        return false;
-      }).length,
-    [stock]
-  );
-
-  // 3) Contagem de itens por categoria (para o CategoryBarChartHorizontal)
-  const itemsByCategory = useMemo(() => {
-    return stock.reduce((acc, item) => {
-      const catName = item.category?.name || 'Sem Categoria';
-      acc[catName] = (acc[catName] || 0) + 1;
-      return acc;
-    }, {});
+  // Filtra itens da data mais recente
+  const latestStock = useMemo(() => {
+    if (!stock.length) return [];
+    const latestISO = stock.reduce(
+      (max, item) => (item.createdAt > max ? item.createdAt : max),
+      stock[0].createdAt
+    );
+    const latestDateStr = dayjs(latestISO).format('YYYY-MM-DD');
+    return stock.filter(
+      (item) => dayjs(item.createdAt).format('YYYY-MM-DD') === latestDateStr
+    );
   }, [stock]);
 
-  // 4) Total de categorias (para exibir no card)
+  // Cálculos com quantity
+  const totalItems = useMemo(
+    () => latestStock.reduce((sum, item) => sum + (item.quantity || 0), 0),
+    [latestStock]
+  );
+  const lowItems = useMemo(
+    () =>
+      latestStock
+        .filter((item) => item.status === 'Baixo' || item.status === 'Final')
+        .reduce((sum, item) => sum + (item.quantity || 0), 0),
+    [latestStock]
+  );
+  const itemsByCategory = useMemo(
+    () =>
+      latestStock.reduce((acc, item) => {
+        const name = item.category?.name || 'Sem Categoria';
+        acc[name] = (acc[name] || 0) + (item.quantity || 0);
+        return acc;
+      }, {}),
+    [latestStock]
+  );
   const totalCategories = categories.length;
 
-  // Se ainda estiver carregando estoque ou categorias, mostramos um spinner simples
+  // Agrupa por fornecedor
+  const itemsBySupplier = useMemo(
+    () =>
+      latestStock.reduce((acc, item) => {
+        const name = item.supplier?.name || 'Sem Fornecedor';
+        acc[name] = (acc[name] || 0) + (item.quantity || 0);
+        return acc;
+      }, {}),
+    [latestStock]
+  );
+
+  // Cálculos específicos para Chope
+  const estoqueChope = useMemo(
+    () =>
+      latestStock
+        .filter((item) => item.category?.name === 'Chope')
+        .reduce((sum, item) => sum + (item.quantity || 0), 0),
+    [latestStock]
+  );
+  const chopesEngatados = useMemo(
+    () =>
+      latestStock
+        .filter((item) => item.category?.name === 'Engatado')
+        .reduce((sum, item) => sum + (item.quantity || 0), 0),
+    [latestStock]
+  );
+  const totalChopes = estoqueChope + chopesEngatados;
+
   if (stockLoading || catLoading) {
     return (
       <>
         <NavBarRestrita />
-        <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
+        <Container sx={{ mt: 4, textAlign: 'center' }}>
           <CircularProgress />
           <Typography variant="h6" sx={{ mt: 2 }}>
             Carregando dados...
@@ -70,175 +116,120 @@ export default function DashboardPage() {
     );
   }
 
-  function handleLogout() {
+  const handleLogout = () => {
     signOut();
     navigate('/login');
-  }
+  };
 
   return (
     <>
-      {/* NavBar restrita para usuários logados */}
       <NavBarRestrita />
-
-      {/* Conteúdo principal */}
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Boas-vindas e botões: sem fundo, com contorno laranja */}
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          sx={{
-            p: 3,
-            border: '2px solid #FFA500',
-            borderRadius: 2,
-            mb: 4,
-          }}
-        >
-          <Typography variant="h4" gutterBottom>
-            Bem-vindo, {user.email}!
-          </Typography>
-          <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+        {/* Header */}
+        <Box sx={{ p: 3, border: '2px solid #FFA500', borderRadius: 2, mb: 4 }} textAlign="center">
+          <Typography variant="h4">Bem-vindo, {user.email}!</Typography>
+          <Typography color="textSecondary" sx={{ mb: 3 }}>
             Esse é o painel de controle do seu sistema de estoque.
           </Typography>
-
-          <Box display="flex" gap={2} flexWrap="wrap" justifyContent="center">
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate('/estoque')}
-            >
-              Ir para Estoque
-            </Button>
-
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button variant="contained" onClick={() => navigate('/estoque')}>Ir para Estoque</Button>
             {user.role === 'admin' && (
               <>
-                <Button variant="outlined" onClick={() => navigate('/categories')}>
-                  Gerenciar Categorias
-                </Button>
-                <Button variant="outlined" onClick={() => navigate('/register')}>
-                  Cadastrar Usuário
-                </Button>
+                <Button variant="outlined" onClick={() => navigate('/categories')}>Gerenciar Categorias</Button>
+                <Button variant="outlined" onClick={() => navigate('/register')}>Cadastrar Usuário</Button>
               </>
             )}
-          </Box>
+            <Button color="error" onClick={handleLogout}>Sair</Button>
+          </Stack>
         </Box>
 
-        {/* Grid de métricas (cards) */}
+        {/* Principais Métricas */}
         <Grid container spacing={3}>
-          {/* 1) Card: Total de Itens */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <Card sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Total de Itens
-                </Typography>
-                <Typography variant="h3" color="primary">
-                  {totalItems}
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Inventory2Icon fontSize="large" color="primary" />
+                  <Typography>Total de Itens</Typography>
+                </Stack>
+                <Typography variant="h3" color="primary">{totalItems}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <WarningAmberIcon fontSize="large" color="error" />
+                  <Typography>Estoque Baixo</Typography>
+                </Stack>
+                <Typography variant="h3" color="error">{lowItems}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <CategoryIcon fontSize="large" color="secondary" />
+                  <Typography>Total Categorias</Typography>
+                </Stack>
+                <Typography variant="h3" color="secondary">{totalCategories}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <LocalBarIcon fontSize="large" color="primary" />
+                  <Typography>Total Chope</Typography>
+                </Stack>
+                <Typography variant="h3" color="primary">{totalChopes}</Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Estoque ({estoqueChope}) + Engatado ({chopesEngatados})
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-
-          {/* 2) Card: Estoque Baixo */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <Card sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Estoque Baixo
-                </Typography>
-                <Typography variant="h3" color="error">
-                  {lowItems}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* 3) Card: Total de Categorias */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <Card sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Total de Categorias
-                </Typography>
-                <Typography variant="h3" color="secondary">
-                  {totalCategories}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* 4) Cards: Quantidade por Categoria (usado no gráfico de barras horizontal) */}
-          {Object.entries(itemsByCategory).map(([categoryName, count]) => (
-            <Grid item xs={12} sm={6} lg={3} key={categoryName}>
-              <Card sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {categoryName}
-                  </Typography>
-                  <Typography variant="h4">{count}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
         </Grid>
 
-        {/* Seção de Gráficos */}
+        {/* Cards por Fornecedor */}
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h6" gutterBottom>Itens por Fornecedor</Typography>
+          <Grid container spacing={2}>
+            {Object.entries(itemsBySupplier).map(([name, qty]) => (
+              <Grid key={name} item xs={6} sm={4} md={2}>
+                <Card sx={{ bgcolor: 'grey.900', color: 'common.white', textAlign: 'center', py: 2 }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{name}</Typography>
+                    <Typography variant="h4">{qty}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        {/* Gráficos */}
         <Box sx={{ mt: 6 }}>
           <Grid container spacing={4}>
-            {/* 1) Evolução Diária: Engatados vs Estoque de Chopes (Stacked AreaChart) ─── ocupa toda largura */}
             <Grid item xs={12}>
-              <Card
-                sx={{
-                  p: 2,
-                  minHeight: 400,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Evolução Diária de Chopes Engatados vs Estoque de Chopes
-                </Typography>
-                <Box sx={{ width: '100%', flexGrow: 1 }}>
-                  <DailyCategoryStackedAreaChart />
-                </Box>
+              <Card sx={{ p: 2, minHeight: 400 }}>
+                <Typography mb={2} variant="h6">Evolução Diária de Itens</Typography>
+                <DailyCategoryStackedAreaChart />
               </Card>
             </Grid>
-
-            {/* 2) Itens por Categoria (Gráfico de barras horizontal) ─── metade da largura em md */}
             <Grid item xs={12} md={6}>
-              <Card
-                sx={{
-                  p: 2,
-                  minHeight: 400,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Itens por Categoria (Barras Horizontais)
-                </Typography>
-                <Box sx={{ width: '100%', flexGrow: 1 }}>
-                  <CategoryBarChartHorizontal />
-                </Box>
+              <Card sx={{ p: 2, minHeight: 400 }}>
+                <Typography mb={2} variant="h6">Itens por Categoria</Typography>
+                <CategoryBarChartHorizontal />
               </Card>
             </Grid>
-
-            {/* 3) Distribuição por Status (Gráfico de Pizza) ─── metade da largura em md */}
             <Grid item xs={12} md={6}>
-              <Card
-                sx={{
-                  p: 2,
-                  minHeight: 400,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Distribuição por Status
-                </Typography>
-                <Box sx={{ width: '100%', flexGrow: 1 }}>
-                  <StatusPieChart />
-                </Box>
+              <Card sx={{ p: 2, minHeight: 400 }}>
+                <Typography mb={2} variant="h6">Distribuição por Status</Typography>
+                <StatusPieChart />
               </Card>
             </Grid>
           </Grid>

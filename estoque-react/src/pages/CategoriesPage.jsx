@@ -1,4 +1,5 @@
 // src/pages/CategoriesPage.jsx
+
 import React, { useState } from 'react';
 import {
   Container,
@@ -17,41 +18,54 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
+
 import { useCategory } from '../contexts/CategoryContext';
 import { useAuth } from '../contexts/AuthContext';
 import NavBarRestrita from '../components/NavBarRestrita';
+import ValidationAlert from '../components/ValidationAlert';
 
 export default function CategoriesPage() {
+  const { 
+    categories, 
+    loading, 
+    addCategory, 
+    updateCategory, 
+    removeCategory 
+  } = useCategory();
   const { user } = useAuth();
-  const { categories, loading, addCategory, updateCategory, removeCategory } = useCategory();
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [editingCat, setEditingCat] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [formValues, setFormValues] = useState({ name: '', description: '' });
-  const [errorMsg, setErrorMsg] = useState('');
 
-  // Estados para confirmação de exclusão
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [catToDelete, setCatToDelete] = useState(null);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+
+  // Estados para alertas de validação
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState('error');
 
   function handleAddClick() {
-    setEditingCat(null);
+    setEditingCategory(null);
     setFormValues({ name: '', description: '' });
-    setErrorMsg('');
     setOpenDialog(true);
   }
 
-  function handleEditClick(cat) {
-    setEditingCat(cat);
-    setFormValues({ name: cat.name, description: cat.description || '' });
-    setErrorMsg('');
+  function handleEditClick(category) {
+    setEditingCategory(category);
+    setFormValues({ 
+      name: category.name || '', 
+      description: category.description || '' 
+    });
     setOpenDialog(true);
   }
 
-  function handleClose() {
+  function handleCloseDialog() {
     setOpenDialog(false);
+    setEditingCategory(null);
   }
 
   function handleChange(e) {
@@ -60,67 +74,74 @@ export default function CategoriesPage() {
   }
 
   async function handleSave() {
-    setErrorMsg('');
+    // Validações: name e description são obrigatórios
     if (!formValues.name.trim()) {
-      setErrorMsg('O nome é obrigatório');
+      setAlertMessage('Nome da categoria é obrigatório');
+      setAlertSeverity('error');
+      setAlertOpen(true);
       return;
     }
+    if (!formValues.description.trim()) {
+      setAlertMessage('Descrição da categoria é obrigatória');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      return;
+    }
+
+    const payload = {
+      name: formValues.name.trim(),
+      description: formValues.description.trim(),
+    };
+
     try {
-      if (editingCat) {
-        await updateCategory(editingCat._id, {
-          name: formValues.name.trim(),
-          description: formValues.description.trim()
-        });
+      if (editingCategory) {
+        await updateCategory(editingCategory._id, payload);
       } else {
-        await addCategory({
-          name: formValues.name.trim(),
-          description: formValues.description.trim()
-        });
+        await addCategory(payload);
       }
-      setOpenDialog(false);
+      handleCloseDialog();
     } catch (err) {
-      const msg = err.response?.data?.error || 'Erro ao salvar categoria';
-      setErrorMsg(msg);
+      console.error('Erro ao salvar categoria:', err.response?.data || err);
+      setAlertMessage(err.response?.data?.error || 'Erro ao salvar categoria');
+      setAlertSeverity('error');
+      setAlertOpen(true);
     }
   }
 
-  // Ao clicar em “Excluir”, pede confirmação
-  function handleDeleteClick(cat) {
-    setCatToDelete(cat);
+  function handleDeleteClick(category) {
+    setCategoryToDelete(category);
     setConfirmOpen(true);
   }
 
-  // Confirma exclusão
-  async function handleConfirmDelete() {
-    if (catToDelete) {
-      try {
-        await removeCategory(catToDelete._id);
-      } catch (err) {
-        console.error('Erro ao excluir categoria:', err);
-        alert(err.response?.data?.error || 'Erro ao excluir categoria');
-      }
-      setCatToDelete(null);
-    }
+  function handleCancelDelete() {
+    setCategoryToDelete(null);
     setConfirmOpen(false);
   }
 
-  // Cancela exclusão
-  function handleCancelDelete() {
-    setCatToDelete(null);
+  async function handleConfirmDelete() {
+    if (!categoryToDelete) return;
+    try {
+      await removeCategory(categoryToDelete._id);
+    } catch (err) {
+      console.error('Erro ao remover categoria:', err.response?.data || err);
+      setAlertMessage(err.response?.data?.error || 'Erro ao remover categoria');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    }
+    setCategoryToDelete(null);
     setConfirmOpen(false);
   }
 
   return (
     <>
-      {/* NavBar restrita para usuários logados */}
       <NavBarRestrita />
 
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h4">Gestão de Categorias</Typography>
+          <Typography variant="h4">Categorias</Typography>
           {user.role === 'admin' && (
             <Button variant="contained" color="primary" onClick={handleAddClick}>
-              Nova Categoria
+              Adicionar Categoria
             </Button>
           )}
         </Box>
@@ -140,20 +161,23 @@ export default function CategoriesPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {categories.map(cat => (
-                  <TableRow key={cat._id}>
-                    <TableCell>{cat.name}</TableCell>
-                    <TableCell>{cat.description || '-'}</TableCell>
+                {categories.map(category => (
+                  <TableRow key={category._id}>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell>{category.description}</TableCell>
                     <TableCell align="right">
                       {user.role === 'admin' ? (
                         <>
-                          <Button size="small" onClick={() => handleEditClick(cat)}>
+                          <Button
+                            size="small"
+                            onClick={() => handleEditClick(category)}
+                          >
                             Editar
                           </Button>
                           <Button
                             size="small"
                             color="error"
-                            onClick={() => handleDeleteClick(cat)}
+                            onClick={() => handleDeleteClick(category)}
                           >
                             Excluir
                           </Button>
@@ -171,17 +195,15 @@ export default function CategoriesPage() {
           </TableContainer>
         )}
 
-        {/* Diálogo de Adicionar/Editar */}
-        <Dialog open={openDialog} onClose={handleClose} maxWidth="sm" fullWidth>
+        {/* Diálogo de adicionar/editar */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle>
-            <Typography variant="h6" color="textPrimary">
-              {editingCat ? 'Editar Categoria' : 'Nova Categoria'}
-            </Typography>
+            {editingCategory ? 'Editar Categoria' : 'Adicionar Categoria'}
           </DialogTitle>
           <DialogContent>
             <TextField
               name="name"
-              label="Nome"
+              label="Nome da Categoria"
               fullWidth
               sx={{ mt: 2 }}
               value={formValues.name}
@@ -191,20 +213,15 @@ export default function CategoriesPage() {
               name="description"
               label="Descrição"
               fullWidth
-              sx={{ mt: 2 }}
               multiline
               rows={3}
+              sx={{ mt: 2 }}
               value={formValues.description}
               onChange={handleChange}
             />
-            {errorMsg && (
-              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                {errorMsg}
-              </Typography>
-            )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancelar</Button>
+            <Button onClick={handleCloseDialog}>Cancelar</Button>
             <Button onClick={handleSave} variant="contained">
               Salvar
             </Button>
@@ -212,17 +229,18 @@ export default function CategoriesPage() {
         </Dialog>
 
         {/* Diálogo de confirmação de exclusão */}
-        <Dialog open={confirmOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
-          <DialogTitle>
-            <Typography variant="h6" color="error">
-              Confirmar Exclusão
-            </Typography>
-          </DialogTitle>
+        <Dialog
+          open={confirmOpen}
+          onClose={handleCancelDelete}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>Confirmar Exclusão</DialogTitle>
           <DialogContent>
             <Typography variant="body1" color="textPrimary">
               Tem certeza que deseja excluir a categoria&nbsp;
               <Typography component="span" variant="body1" fontWeight={700}>
-                "{catToDelete?.name}"
+                "{categoryToDelete?.name}"
               </Typography>
               ?
             </Typography>
@@ -234,6 +252,14 @@ export default function CategoriesPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Alerta de validação */}
+        <ValidationAlert
+          open={alertOpen}
+          severity={alertSeverity}
+          message={alertMessage}
+          onClose={() => setAlertOpen(false)}
+        />
       </Container>
     </>
   );

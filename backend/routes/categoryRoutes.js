@@ -1,10 +1,9 @@
-// backend/routes/categoryRoutes.js
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const categoryController = require('../controllers/categoryController');
 const router = express.Router();
 
-// Validações
+// Validações de nome e description
 const categoryValidation = [
   body('name')
     .trim()
@@ -44,6 +43,7 @@ router.put(
   categoryController.updateCategory
 );
 
+// DELETE: não remove se existir StockItem referenciando esta categoria
 router.delete('/:id', categoryController.deleteCategory);
 
 module.exports = router;

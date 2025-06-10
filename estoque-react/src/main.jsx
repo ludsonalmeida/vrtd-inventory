@@ -10,6 +10,8 @@ import { SupplierProvider } from './contexts/SupplierContext';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import './index.css';
+import { ProductProvider } from './contexts/ProductContext';
+
 
 const theme = createTheme({
   palette: {
@@ -89,6 +91,13 @@ const theme = createTheme({
         },
       },
     },
+    MuiSvgIcon: {
+      styleOverrides: {
+        root: {
+          color: '#ffffff',       // define cor branca para todos os SvgIcon
+        },
+      },
+    },
     MuiOutlinedInput: {
       defaultProps: {
         notched: true,
@@ -126,14 +135,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <CssBaseline />
       <AuthProvider>
         <UnitProvider>
-        <CategoryProvider>
-          <StockProvider>
-             <SupplierProvider>
-            <AppRoutes />
-            </SupplierProvider>
-          </StockProvider>
-        </CategoryProvider>
-       </UnitProvider>
+          <CategoryProvider>
+            <StockProvider>
+              <SupplierProvider>
+                <ProductProvider>
+                  <AppRoutes />
+                </ProductProvider>
+              </SupplierProvider>
+            </StockProvider>
+          </CategoryProvider>
+        </UnitProvider>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>

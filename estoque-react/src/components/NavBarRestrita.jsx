@@ -36,6 +36,9 @@ export default function NavBarRestrita() {
         <Button color="inherit" component={Link} to="/dashboard">
           Dashboard
         </Button>
+        <Button color="inherit" component={Link} to="/products">
+          Produtos
+        </Button>
         <Button color="inherit" component={Link} to="/estoque">
           Estoque
         </Button>

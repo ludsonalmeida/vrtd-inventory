@@ -1,6 +1,6 @@
 // src/contexts/CategoryContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../services/api';
+import api from '../services/api';
 import { useAuth } from './AuthContext';
 
 const CategoryContext = createContext();

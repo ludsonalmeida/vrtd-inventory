@@ -1,46 +1,34 @@
+// backend/models/Supplier.js
+
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const SupplierSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
+const supplierSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    cnpj: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    // Se houver outros campos no futuro, basta adicioná-los aqui
   },
-  email: {
-    type: String,
-    trim: true,
-    lowercase: true,
-  },
-  phone: {
-    type: String,
-    trim: true,
-  },
-  address: {
-    street: String,
-    city: String,
-    state: String,
-    zip: String,
-    country: String,
-  },
-  // Qualquer outro campo que considerar relevante, por ex. CNPJ, notas
-  notes: {
-    type: String,
-    trim: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  }
-});
+  { timestamps: true }
+);
 
-// Atualiza `updatedAt` sempre que editar
-SupplierSchema.pre('save', function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-module.exports = mongoose.model('Supplier', SupplierSchema);
+module.exports = mongoose.model('Supplier', supplierSchema);

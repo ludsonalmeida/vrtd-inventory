@@ -1,5 +1,4 @@
-// src/components/DailyCategoryStackedAreaChart.jsx
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import {
   ResponsiveContainer,
@@ -11,75 +10,100 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { useStock } from '../contexts/StockContext';
-import { useCategory } from '../contexts/CategoryContext';
-import { buildDailyCategoryData } from './buildDailyCategoryData';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import api from '../services/api';
 
 export default function DailyCategoryStackedAreaChart() {
-  const { stock } = useStock();
-  const { categories } = useCategory();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 1) Pega o _id das categorias “Chopes Engatados” e “Estoque de Chopes”
-  const engatadosId = useMemo(() => {
-    const found = categories.find((c) => c.name === 'Chopes Engatados');
-    return found ? found._id : null;
-  }, [categories]);
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const response = await api.get('/reports/daily-chopes');
+        setData(response.data);
+      } catch (err) {
+        console.error('Erro ao carregar dados diários:', err);
+        const msg =
+          err.response?.data?.error ||
+          'Não foi possível carregar os dados de evolução diária';
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
-  const estoqueId = useMemo(() => {
-    const found = categories.find((c) => c.name === 'Estoque de Chopes');
-    return found ? found._id : null;
-  }, [categories]);
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  // 2) Constrói array de { date, engatadosCount, estoqueCount } apenas se ambos os IDs existirem
-  const data = useMemo(() => {
-    if (!engatadosId || !estoqueId) return [];
-    return buildDailyCategoryData(stock, engatadosId, estoqueId);
-  }, [stock, engatadosId, estoqueId]);
+  if (error) {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
 
-  // Cores para cada área
-  const COLORS = {
-    engatados: '#42a5f5', // azul claro
-    estoque: '#ffa726',   // laranja
-  };
+  if (!data || data.length === 0) {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'text.secondary',
+          fontStyle: 'italic',
+        }}
+      >
+        Nenhum dado disponível para “Chopes Engatados” ou “Estoque de Chopes”.
+      </Box>
+    );
+  }
 
-  // Função que converte "YYYY-MM-DD" → "DD/MM/YYYY"
-  const formatDate = (isoString) => dayjs(isoString, 'YYYY-MM-DD').format('DD/MM/YYYY');
+  const COLORS = { engatados: '#8884d8', estoque: '#82ca9d' };
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <AreaChart
-        data={data}
-        margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-
-        {/* XAxis agora formata a data para 'DD/MM/YYYY' */}
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart data={data} margin={{ top: 16, right: 40, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="date"
-          tickFormatter={formatDate}
-          tick={{ fill: '#ddd', fontSize: 12 }}
-          axisLine={{ stroke: '#555' }}
-          tickLine={{ stroke: '#555' }}
+          tickFormatter={(date) => dayjs(date).format('DD/MM')}
+          minTickGap={15}
         />
-
-        <YAxis
-          allowDecimals={false}
-          tick={{ fill: '#ddd', fontSize: 12 }}
-          axisLine={{ stroke: '#555' }}
-          tickLine={{ stroke: '#555' }}
-        />
-
-        {/* Tooltip também precisa formatar a label */}
+        <YAxis allowDecimals={false} />
         <Tooltip
-          labelFormatter={(value) => formatDate(value)}
-          contentStyle={{ backgroundColor: '#1e1e1e', border: 'none' }}
-          labelStyle={{ color: '#aaa' }}
-          itemStyle={{ color: '#fff' }}
+          labelFormatter={(label) => `Data: ${dayjs(label).format('DD/MM/YYYY')}`}
         />
+        <Legend verticalAlign="top" height={36} />
 
-        <Legend wrapperStyle={{ color: '#ddd', marginTop: 10 }} />
-
-        {/* Área para “Chopes Engatados” */}
         <Area
           type="monotone"
           dataKey="engatadosCount"
@@ -89,8 +113,6 @@ export default function DailyCategoryStackedAreaChart() {
           fill={COLORS.engatados}
           fillOpacity={0.6}
         />
-
-        {/* Área para “Estoque de Chopes” */}
         <Area
           type="monotone"
           dataKey="estoqueCount"

@@ -8,8 +8,10 @@ import RegisterPage from '../pages/RegisterPage.jsx';
 import DashboardPage from '../pages/DashboardPage.jsx';
 import StockPage from '../pages/StockPage.jsx';
 import CategoriesPage from '../pages/CategoriesPage.jsx';
-import SuppliersPage from '../pages/SuppliersPage.jsx';    // ⬅️ importar a nova página
-import UnitsPage from '../pages/UnitsPage.jsx';            // ⬅️ caso já exista
+import SuppliersPage from '../pages/SuppliersPage.jsx';
+import SuppliersReportPage from '../pages/SuppliersReportPage.jsx'; // ← NOVA PÁGINA DE RELATÓRIO
+import UnitsPage from '../pages/UnitsPage.jsx';
+import ProductPage from '../pages/ProductPage.jsx';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -54,6 +56,16 @@ export default function AppRoutes() {
           }
         />
 
+        {/* Produtos: qualquer usuário autenticado */}
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <ProductPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Estoque: qualquer usuário autenticado */}
         <Route
           path="/estoque"
@@ -90,6 +102,16 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <SuppliersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Relatório de Fornecedores: qualquer usuário autenticado */}
+        <Route
+          path="/suppliers/report"
+          element={
+            <ProtectedRoute>
+              <SuppliersReportPage />
             </ProtectedRoute>
           }
         />

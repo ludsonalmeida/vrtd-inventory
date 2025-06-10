@@ -107,6 +107,7 @@ input:focus {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Alfa Slab One', serif;
+  color:#fff;
 }
 
 h1, h4 { font-weight: 700; }
@@ -120,4 +121,28 @@ h3, h6 { font-weight: 300; }
   padding: 0 4px;
   /* Opcional: se quiser que o label fique nivelado verticalmente */
   z-index: 1;
+}
+
+table th{
+  font-weight: bold !important;
+}
+
+/* Torna todas as MUI SvgIcon brancas por padrão */
+.MuiSvgIcon-root {
+  color: #fff !important;
+}
+
+/* Ícones em adornos de campos de texto (InputAdornment) */
+.MuiInputAdornment-root .MuiSvgIcon-root {
+  color: #fff !important;
+}
+
+/* força o indicador do datepicker do Chrome/Safari a ficar branco */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(150%) contrast(80%);
+}
+
+/* para Firefox (se suportado) */
+input[type="date"]::-moz-calendar-picker-indicator {
+  filter: invert(1);
 }

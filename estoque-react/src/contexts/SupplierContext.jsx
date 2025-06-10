@@ -1,6 +1,7 @@
 // src/contexts/SupplierContext.jsx
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../services/api'; // instância axios configurada para apontar a sua API
+import api from '../services/api';
 import { useAuth } from './AuthContext';
 
 const SupplierContext = createContext();
@@ -38,6 +39,7 @@ export function SupplierProvider({ children }) {
     try {
       const response = await api.post('/suppliers', data);
       setSuppliers(prev => [...prev, response.data]);
+      return response.data;
     } catch (err) {
       console.error('Erro ao adicionar fornecedor:', err);
       throw err;
@@ -52,6 +54,7 @@ export function SupplierProvider({ children }) {
       setSuppliers(prev =>
         prev.map(sup => (sup._id === id ? response.data : sup))
       );
+      return response.data;
     } catch (err) {
       console.error('Erro ao atualizar fornecedor:', err);
       throw err;
@@ -64,6 +67,7 @@ export function SupplierProvider({ children }) {
     try {
       await api.delete(`/suppliers/${id}`);
       setSuppliers(prev => prev.filter(sup => sup._id !== id));
+      return;
     } catch (err) {
       console.error('Erro ao remover fornecedor:', err);
       throw err;

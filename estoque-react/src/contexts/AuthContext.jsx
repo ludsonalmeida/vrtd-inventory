@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../services/api';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
   // Ao montar, verificar se há token válido no localStorage
   useEffect(() => {
     const token = localStorage.getItem('token');
-    console.log('[AuthContext] Montagem: token do localStorage =', token);
+    //console.log('[AuthContext] Montagem: token do localStorage =', token);
 
     if (token) {
       const decoded = decodeToken(token);
@@ -58,6 +58,11 @@ export function AuthProvider({ children }) {
 
     setLoading(false);
   }, []);
+
+  // Se ainda estivermos carregando, não renderiza nada (ou um spinner)
+  if (loading) {
+    return null; // ou <CircularProgress /> se quiser mostrar um loader
+  }
 
   // Função de login
   async function signIn({ email, password }) {

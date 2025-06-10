@@ -41,3 +41,16 @@
   color: #888;
 }
 
+table tr {
+  font-weight: bold !important;
+}
+
+/* Torna todas as MUI SvgIcon brancas por padrão */
+.MuiSvgIcon-root {
+  color: #fff !important;
+}
+
+/* Ícones em adornos de campos de texto (InputAdornment) */
+.MuiInputAdornment-root .MuiSvgIcon-root {
+  color: #fff !important;
+}

@@ -1,111 +1,182 @@
 // backend/controllers/stockController.js
 const StockItem = require('../models/StockItem');
-const Category = require('../models/Category');
+const Category  = require('../models/Category');
+const Supplier  = require('../models/Supplier');
+const Unit      = require('../models/Unit');
 
 /**
  * GET /api/stock
- * Retorna todos os itens, com categoria “populada” (apenas o nome).
+ * Retorna todos os itens de estoque, populando 'category', 'supplier' e 'unit'.
  */
 async function getAllItems(req, res) {
   try {
     const items = await StockItem.find()
       .populate('category', 'name')
-      .sort({ 'category.name': 1, name: 1 });
-    res.json(items);
+      .populate('supplier', 'name cnpj')
+      .populate('unit', 'name iconName');
+    return res.json(items);
   } catch (error) {
     console.error('Erro ao buscar itens:', error);
-    res.status(500).json({ error: 'Erro ao buscar itens' });
+    return res.status(500).json({ error: 'Erro ao buscar itens' });
   }
 }
 
 /**
  * GET /api/stock/:id
- * Retorna um item específico, com categoria populada.
+ * Retorna um único item de estoque, populando category, supplier e unit.
  */
 async function getItemById(req, res) {
   try {
     const { id } = req.params;
-    const item = await StockItem.findById(id).populate('category', 'name');
-    if (!item) return res.status(404).json({ error: 'Item não encontrado' });
-    res.json(item);
+    const item = await StockItem.findById(id)
+      .populate('category', 'name')
+      .populate('supplier', 'name cnpj')
+      .populate('unit', 'name iconName');
+    if (!item) {
+      return res.status(404).json({ error: 'Item não encontrado' });
+    }
+    return res.json(item);
   } catch (error) {
     console.error('Erro ao buscar item:', error);
-    res.status(500).json({ error: 'Erro ao buscar item' });
+    return res.status(500).json({ error: 'Erro ao buscar item' });
   }
 }
 
 /**
  * POST /api/stock
- * Cria um novo item de estoque. Recebe category como ObjectId (string).
+ * Cria um novo item de estoque. Exige supplier, category, name no body.
  */
 async function createItem(req, res) {
   try {
-    const { category, name, quantity, unit, status } = req.body;
+    const {
+      supplier,
+      category,
+      name,
+      quantity,
+      stockMin,
+      stockMax,
+      unit,
+      status,
+      avgPrice, // Novo campo
+    } = req.body;
 
-    // Validação básica
-    if (!category || !name) {
-      return res.status(400).json({ error: 'Categoria e nome são obrigatórios' });
+    // 1) Verifica se o fornecedor existe
+    const foundSupplier = await Supplier.findById(supplier);
+    if (!foundSupplier) {
+      return res.status(404).json({ error: 'Fornecedor não encontrado' });
     }
-    // Verifica se a categoria existe
-    const catExists = await Category.findById(category);
-    if (!catExists) {
-      return res.status(400).json({ error: 'Categoria inválida' });
+
+    // 2) Verifica se a categoria existe
+    const foundCategory = await Category.findById(category);
+    if (!foundCategory) {
+      return res.status(404).json({ error: 'Categoria não encontrada' });
     }
 
-    // Cria e salva o novo item
-    const newItem = new StockItem({ category, name, quantity, unit, status });
-    const saved = await newItem.save();
+    // 3) Verifica se a unidade existe (se fornecida)
+    if (unit) {
+      const foundUnit = await Unit.findById(unit);
+      if (!foundUnit) {
+        return res.status(404).json({ error: 'Unidade não encontrada' });
+      }
+    }
 
-    // Rebusca pelo ID e popula categoria
-    const populated = await StockItem.findById(saved._id).populate('category', 'name');
-    res.status(201).json(populated);
+    // 4) Cria o novo item de estoque, incluindo avgPrice se presente
+    const newItem = await StockItem.create({
+      supplier,
+      category,
+      name: name.trim(),
+      quantity: quantity ?? 0,
+      stockMin: stockMin ?? 0,
+      stockMax: stockMax ?? 0,
+      unit: unit || null,
+      status: status || 'N/A',
+      avgPrice: avgPrice !== undefined ? Number(avgPrice) : undefined,
+    });
+
+    // 5) Retorna o item populado
+    const populated = await StockItem.findById(newItem._id)
+      .populate('category', 'name')
+      .populate('supplier', 'name cnpj')
+      .populate('unit', 'name iconName');
+
+    return res.status(201).json(populated);
   } catch (error) {
-    console.error('Erro ao criar item:', error);
-    res.status(500).json({ error: 'Erro ao criar item' });
+    console.error('Erro ao criar item de estoque:', error);
+    return res.status(500).json({ error: 'Erro ao criar item de estoque' });
   }
 }
 
 /**
  * PUT /api/stock/:id
- * Atualiza um item. Pode atualizar category, name, quantity, etc.
+ * Atualiza um item de estoque. Pode atualizar supplier, category, name, etc.
  */
 async function updateItem(req, res) {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updateData = {};
 
-    // Se category estiver no body, verifique se existe
-    if (updates.category) {
-      const catExists = await Category.findById(updates.category);
-      if (!catExists) {
-        return res.status(400).json({ error: 'Categoria inválida' });
+    if (req.body.supplier) {
+      const sup = await Supplier.findById(req.body.supplier);
+      if (!sup) {
+        return res.status(404).json({ error: 'Fornecedor não encontrado' });
       }
+      updateData.supplier = req.body.supplier;
+    }
+    if (req.body.category) {
+      const cat = await Category.findById(req.body.category);
+      if (!cat) {
+        return res.status(404).json({ error: 'Categoria não encontrada' });
+      }
+      updateData.category = req.body.category;
+    }
+    if (req.body.unit) {
+      const u = await Unit.findById(req.body.unit);
+      if (!u) {
+        return res.status(404).json({ error: 'Unidade não encontrada' });
+      }
+      updateData.unit = req.body.unit;
+    }
+    if (req.body.name !== undefined)      updateData.name = req.body.name.trim();
+    if (req.body.quantity !== undefined)  updateData.quantity = req.body.quantity;
+    if (req.body.stockMin !== undefined)  updateData.stockMin = req.body.stockMin;
+    if (req.body.stockMax !== undefined)  updateData.stockMax = req.body.stockMax;
+    if (req.body.status !== undefined)    updateData.status = req.body.status;
+    if (req.body.avgPrice !== undefined)  updateData.avgPrice = Number(req.body.avgPrice);
+
+    const updated = await StockItem.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    })
+      .populate('category', 'name')
+      .populate('supplier', 'name cnpj')
+      .populate('unit', 'name iconName');
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Item não encontrado' });
     }
 
-    const updated = await StockItem.findByIdAndUpdate(id, updates, {
-      new: true
-    }).populate('category', 'name');
-
-    if (!updated) return res.status(404).json({ error: 'Item não encontrado' });
-    res.json(updated);
+    return res.json(updated);
   } catch (error) {
     console.error('Erro ao atualizar item:', error);
-    res.status(500).json({ error: 'Erro ao atualizar item' });
+    return res.status(500).json({ error: 'Erro ao atualizar item' });
   }
 }
 
 /**
  * DELETE /api/stock/:id
+ * Remove um item de estoque.
  */
 async function deleteItem(req, res) {
   try {
     const { id } = req.params;
     const removed = await StockItem.findByIdAndDelete(id);
-    if (!removed) return res.status(404).json({ error: 'Item não encontrado' });
-    res.json({ message: 'Item removido com sucesso' });
+    if (!removed) {
+      return res.status(404).json({ error: 'Item não encontrado' });
+    }
+    return res.json({ message: 'Item removido com sucesso' });
   } catch (error) {
     console.error('Erro ao remover item:', error);
-    res.status(500).json({ error: 'Erro ao remover item' });
+    return res.status(500).json({ error: 'Erro ao remover item' });
   }
 }
 
@@ -114,5 +185,5 @@ module.exports = {
   getItemById,
   createItem,
   updateItem,
-  deleteItem
+  deleteItem,
 };
