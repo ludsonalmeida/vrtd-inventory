@@ -11,6 +11,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import './index.css';
 import { ProductProvider } from './contexts/ProductContext';
+import { StockMovementsProvider } from './contexts/StockMovementsContext'
+
 
 
 const theme = createTheme({
@@ -137,11 +139,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <UnitProvider>
           <CategoryProvider>
             <StockProvider>
-              <SupplierProvider>
-                <ProductProvider>
-                  <AppRoutes />
-                </ProductProvider>
-              </SupplierProvider>
+              <StockMovementsProvider>
+                <SupplierProvider>
+                  <ProductProvider>
+                    <AppRoutes />
+                  </ProductProvider>
+                </SupplierProvider>
+              </StockMovementsProvider>
             </StockProvider>
           </CategoryProvider>
         </UnitProvider>

@@ -26,7 +26,7 @@ export default function Footer() {
               <br />
               (61) 93500-3917
               <br />
-              Horário: Seg-Dom, 17h – 01h
+              Horário: Ter-Dom, 17h – 01h
             </Typography>
           </Grid>
 

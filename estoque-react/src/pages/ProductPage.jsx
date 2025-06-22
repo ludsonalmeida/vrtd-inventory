@@ -8,11 +8,13 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useDropzone } from 'react-dropzone';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+
 
 import api from '../services/api';
 import { useProduct } from '../contexts/ProductContext';
 import { useSupplier } from '../contexts/SupplierContext';
-import NavBarRestrita from '../components/NavBarRestrita';
 import ValidationAlert from '../components/ValidationAlert';
 
 export default function ProductPage() {
@@ -141,20 +143,21 @@ export default function ProductPage() {
   const handleManualSave = async () => {
     if (manualSaving) return;
 
-    // 1) Verificação de duplicata
+    // Verificação de duplicata (desconsiderar o próprio produto se estiver editando)
     const exists = products.some(
-      p => p.name.toLowerCase() === manualValues.name.trim().toLowerCase()
+      p =>
+        p.name.toLowerCase() === manualValues.name.trim().toLowerCase() &&
+        (!editingItem || p._id !== editingItem._id)
     );
     if (exists) {
-      showAlert('Produto já existe no sistema', 'warning');
+      showAlert('Já existe outro produto com esse nome', 'warning');
       return;
     }
 
-    // 2) Validações
+    // Validações
     if (!manualValues.name.trim()) return showAlert('Nome é obrigatório');
     if (!manualValues.supplier) return showAlert('Fornecedor é obrigatório');
 
-    // 3) Preparar payload
     const payload = {
       name: manualValues.name.trim(),
       supplier: manualValues.supplier,
@@ -162,7 +165,6 @@ export default function ProductPage() {
       description: manualValues.description
     };
 
-    // 4) Envio
     setManualSaving(true);
     try {
       if (editingItem) {
@@ -283,11 +285,17 @@ export default function ProductPage() {
     setScanned([]);
   };
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: React.useCallback(files => {
+      if (files.length) setFile(files[0]);
+    }, [setFile]),
+    accept: { 'image/*': [], 'application/pdf': [] }
+  });
+
 
 
   return (
     <>
-      <NavBarRestrita />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
 
         {/* === Manual Section === */}
@@ -313,19 +321,36 @@ export default function ProductPage() {
         </Box>
 
 
-        <Box display="flex" alignItems="center" mb={4}>
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={e => setFile(e.target.files[0])}
-          />
+        <Box mb={4}>
+          <Box
+            {...getRootProps()}
+            sx={{
+              border: '2px dashed #1976d2',
+              borderRadius: 2,
+              p: 4,
+              textAlign: 'center',
+              bgcolor: isDragActive ? 'rgba(25,118,210,0.1)' : 'transparent',
+              cursor: 'pointer'
+            }}
+          >
+            <input {...getInputProps()} />
+            <UploadFileIcon sx={{ fontSize: 48, color: '#1976d2' }} />
+            <Typography sx={{ mt: 1 }}>
+              {isDragActive
+                ? 'Solte a nota aqui...'
+                : file
+                  ? file.name
+                  : 'Arraste sua nota fiscal ou clique para selecionar'}
+            </Typography>
+          </Box>
+
           <Tooltip title="Necessário assimilar um fornecedor" arrow>
             <span>
               <Button
                 variant="outlined"
                 onClick={handleScan}
-                disabled={scanning || !importSupplier}
-                sx={{ ml: 2 }}
+                disabled={scanning || !importSupplier || !file}
+                sx={{ mt: 2 }}
               >
                 {scanning ? <CircularProgress size={20} /> : 'Processar Nota'}
               </Button>

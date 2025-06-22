@@ -99,8 +99,6 @@ export default function LoginPage() {
         </Box>
       </Paper>
       
-      {/* Aqui inserimos o Footer */}
-      <Footer />
     </Container>
   );
 }

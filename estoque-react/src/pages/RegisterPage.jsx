@@ -17,7 +17,7 @@ import {
   MenuItem,
   CircularProgress,
 } from '@mui/material';
-import NavBarRestrita from '../components/NavBarRestrita';
+
 import ValidationAlert from '../components/ValidationAlert';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -112,8 +112,6 @@ export default function RegisterPage() {
 
   return (
     <>
-      <NavBarRestrita />
-
       <Container maxWidth="sm" sx={{ mt: 4 }}>
         <Typography variant="h4" align="center" gutterBottom>
           Cadastro de Usuário

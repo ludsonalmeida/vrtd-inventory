@@ -29,7 +29,6 @@ import {
 } from '@mui/icons-material';
 
 import { useUnit } from '../contexts/UnitContext';
-import NavBarRestrita from '../components/NavBarRestrita';
 import ValidationAlert from '../components/ValidationAlert';
 import { unitIcons } from '../icons/unitIcons';
 
@@ -159,7 +158,7 @@ export default function UnitsPage() {
   if (unitLoading) {
     return (
       <>
-        <NavBarRestrita />
+     
         <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
           <CircularProgress />
           <Typography variant="h6" sx={{ mt: 2 }}>
@@ -172,7 +171,7 @@ export default function UnitsPage() {
 
   return (
     <>
-      <NavBarRestrita />
+ 
 
       <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>

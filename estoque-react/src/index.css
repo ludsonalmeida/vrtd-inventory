@@ -107,12 +107,11 @@ input:focus {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Alfa Slab One', serif;
-  color:#fff;
+  color: #fff;
+  font-weight: 400 !important;
 }
 
-h1, h4 { font-weight: 700; }
-h2, h5 { font-weight: 500; }
-h3, h6 { font-weight: 300; }
+/* Removendo pesos de fonte específicos */
 
 /* Garante que todo InputLabel que esteja “shrunken” tenha fundo igual a #1e1e1e */
 .MuiInputLabel-root[data-shrink="true"] {
@@ -123,8 +122,8 @@ h3, h6 { font-weight: 300; }
   z-index: 1;
 }
 
-table th{
-  font-weight: bold !important;
+table th {
+  font-weight: bold;
 }
 
 /* Torna todas as MUI SvgIcon brancas por padrão */

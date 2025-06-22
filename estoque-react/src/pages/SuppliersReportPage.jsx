@@ -15,7 +15,6 @@ import {
   Box,
 } from '@mui/material';
 import api from '../services/api';
-import NavBarRestrita from '../components/NavBarRestrita';
 
 export default function SuppliersReportPage() {
   const [report, setReport] = useState([]);
@@ -37,7 +36,7 @@ export default function SuppliersReportPage() {
 
   return (
     <>
-      <NavBarRestrita />
+  
       <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h4" gutterBottom>
           Relatório de Fornecedores

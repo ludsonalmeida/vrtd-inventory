@@ -1,5 +1,4 @@
 // src/pages/StockPage.jsx
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -31,15 +30,21 @@ import {
   InputAdornment,
 } from '@mui/material';
 import LinearProgress from '@mui/material/LinearProgress';
-
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useStock } from '../contexts/StockContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useCategory } from '../contexts/CategoryContext';
 import { useUnit } from '../contexts/UnitContext';
 import { useSupplier } from '../contexts/SupplierContext';
-import NavBarRestrita from '../components/NavBarRestrita';
 import ValidationAlert from '../components/ValidationAlert';
 import { unitIcons } from '../icons/unitIcons';
+import { useProduct } from '../contexts/ProductContext';
+import { parseContagemWithOpenAI } from '../utils/openai';
+import { LoadingButton } from '@mui/lab';
+import StockDailyCount from '../components/StockDailyCount'
+
+
 
 /** Percentuais para as barras de status */
 const STATUS_PERCENT = {
@@ -82,23 +87,22 @@ function getWeekday(dateStr) {
 export default function StockPage() {
   const { stock, loading: stockLoading, addItem, updateItem, removeItem } = useStock();
   const { user } = useAuth();
-  const { categories, loading: catLoading } = useCategory();
-  const { units, loading: unitLoading } = useUnit();
+  const { categories: ctxCategories, loading: catLoading } = useCategory();
+  const { units: ctxUnits, loading: unitLoading } = useUnit();
   const { suppliers, loading: supplierLoading } = useSupplier();
   const location = useLocation();
-
-
+  const [importLoading, setImportLoading] = useState(false);
   // Dialog de add/edit
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formValues, setFormValues] = useState({
     supplier: '',
     category: '',
+    product: '',   // ← Adicione isso aqui
     name: '',
     quantity: '',
     unit: '',
     status: 'N/A',
-    avgPrice: '',
   });
 
   // Opções de preço médio (autocomplete)
@@ -124,6 +128,12 @@ export default function StockPage() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('error');
+
+  // Importação
+  const [openImportDialog, setOpenImportDialog] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [parsedItems, setParsedItems] = useState([]);
+  const [invalidProducts, setInvalidProducts] = useState([]);
 
   // Carrega params de URL
   useEffect(() => {
@@ -162,13 +172,13 @@ export default function StockPage() {
   useEffect(() => {
     const { category } = formValues;
     if (!category) return;
-    const sel = categories.find(c => c._id === category);
+    const sel = ctxCategories.find(c => c._id === category);
     if (!sel) return;
     let newStatus = formValues.status;
     let newUnit = formValues.unit;
     if (sel.name === 'Estoque de Chope') newStatus = 'Cheio';
     if (['Estoque de Chope', 'Chopes Engatados'].includes(sel.name)) {
-      const barril = units.find(u => u.name.toLowerCase() === 'barril');
+      const barril = ctxUnits.find(u => u.name.toLowerCase() === 'barril');
       if (barril) newUnit = barril._id;
     }
     setFormValues(v =>
@@ -176,7 +186,7 @@ export default function StockPage() {
         ? { ...v, status: newStatus, unit: newUnit }
         : v
     );
-  }, [formValues.category, categories, units]);
+  }, [formValues.category, ctxCategories, ctxUnits]);
 
   // Handlers gerais
   function handleChange(e) {
@@ -189,6 +199,7 @@ export default function StockPage() {
     setFormValues({
       supplier: formValues.supplier || '',
       category: '',
+      product: '',   // ← Aqui também
       name: '',
       quantity: '',
       unit: '',
@@ -202,13 +213,12 @@ export default function StockPage() {
   function openEdit(item) {
     setEditingItem(item);
     setFormValues({
-      supplier: item.supplier?._id || '',
+      supplier: item.supplier?._id || item.supplier || '',
       category: item.category?._id || '',
-      name: item.name,
+      product: item.product?._id || item.product || '',
       quantity: item.quantity ?? '',
       unit: item.unit?._id || '',
       status: item.status || 'N/A',
-      avgPrice: item.avgPrice != null ? item.avgPrice.toString() : '',
     });
     setOpenDialog(true);
   }
@@ -226,26 +236,18 @@ export default function StockPage() {
   async function handleSave() {
     if (!formValues.supplier) return showAlert('Fornecedor é obrigatório');
     if (!formValues.category) return showAlert('Categoria é obrigatória');
-    if (!formValues.name.trim()) return showAlert('Nome do item é obrigatório');
+    if (!formValues.product) return showAlert('Produto é obrigatório');
     if (formValues.quantity === '') return showAlert('Quantidade é obrigatória');
     if (!formValues.unit) return showAlert('Unidade é obrigatória');
     if (!formValues.status) return showAlert('Status é obrigatório');
-    if (
-      formValues.avgPrice !== '' &&
-      (isNaN(Number(formValues.avgPrice)) || Number(formValues.avgPrice) < 0)
-    ) {
-      return showAlert('Preço médio deve ser um número não negativo');
-    }
 
     const payload = {
-      supplier: formValues.supplier,
+      supplier: formValues.supplier?._id || formValues.supplier,
       category: formValues.category,
-      name: formValues.name.trim(),
+      product: formValues.product,  // ✅ Agora enviando o ID do produto
       quantity: Number(formValues.quantity),
       unit: formValues.unit,
       status: formValues.status,
-      avgPrice:
-        formValues.avgPrice === '' ? undefined : Number(formValues.avgPrice),
     };
 
     try {
@@ -294,7 +296,7 @@ export default function StockPage() {
   const filteredStock = useMemo(() => {
     let arr = stock.filter(item => {
       const dt = new Date(item.updatedAt || item.createdAt);
-      const byName = item.name.toLowerCase().includes(filterName.toLowerCase());
+      const byName = (item.product?.name || '').toLowerCase().includes(filterName.toLowerCase());
       const byCat = filterCategory ? item.category?._id === filterCategory : true;
       const bySup = filterSupplier ? item.supplier?._id === filterSupplier : true;
       const byStart = filterStartDate ? dt >= new Date(filterStartDate) : true;
@@ -305,7 +307,7 @@ export default function StockPage() {
 
     });
 
-    
+
 
     if (showLowOnly) {
       arr = arr.filter(i => i.status === 'Baixo' || i.status === 'Final');
@@ -322,7 +324,7 @@ export default function StockPage() {
               return obj.quantity ?? 0;
             case 'unit':
               const uid = obj.unit?._id || obj.unit;
-              const u = units.find(un => un._id === uid);
+              const u = ctxUnits.find(un => un._id === uid);
               return u?.name || '';
             case 'status':
               return obj.status || '';
@@ -355,21 +357,21 @@ export default function StockPage() {
     showLowOnly,
     sortField,
     sortOrder,
-    units,
+    ctxUnits,
   ]);
 
   const sumFilteredQuantity = useMemo(
-      () =>
-        filteredStock.reduce((sum, item) => sum + (item.quantity || 0), 0),
-      [filteredStock]
-    );
+    () =>
+      filteredStock.reduce((sum, item) => sum + (item.quantity || 0), 0),
+    [filteredStock]
+  );
 
 
   const countByName = useMemo(
     () =>
       filterName
         ? stock.filter(item =>
-          item.name.toLowerCase().includes(filterName.toLowerCase())
+          (item.product?.name || '').toLowerCase().includes(filterName.toLowerCase())
         ).length
         : 0,
     [stock, filterName]
@@ -407,7 +409,8 @@ export default function StockPage() {
 
   // Renderiza barra de status
   function renderStatusBar(status) {
-    const pct = STATUS_PERCENT[status] ?? 0;
+    const pct = STATUS_PERCENT[status] !== undefined ? STATUS_PERCENT[status] : 0;
+
     let color = '#757575';
     if (status === 'Cheio') color = '#4caf50';
     if (status === 'Meio') color = '#2196f3';
@@ -435,17 +438,152 @@ export default function StockPage() {
   const anyLoading =
     stockLoading || catLoading || unitLoading || supplierLoading;
 
+  const { products } = useProduct();
+
+
+  // Handlers para importação
+  const handleOpenImportDialog = () => {
+    setOpenImportDialog(true);
+  };
+
+  const handleCloseImportDialog = () => {
+    setOpenImportDialog(false);
+    setImportText('');
+    setParsedItems([]);
+  };
+
+  function findMatchingProduct(name, products) {
+    const normalized = name.toLowerCase().trim();
+    const found = products.find(p => normalized.includes(p.name.toLowerCase()));
+    if (found) return found;
+
+    return products.find(p => p.name.toLowerCase().includes(normalized));
+  }
+  const handleParseImportText = async () => {
+    try {
+      setImportLoading(true);
+      setParsedItems([]);
+      setAlertMessage('Processando contagem com IA... Por favor aguarde.');
+      setAlertSeverity('info');
+      setAlertOpen(true);
+
+      const parsed = await parseContagemWithOpenAI(importText);
+
+      setParsedItems(
+        parsed.map(item => {
+          const foundProduct = findMatchingProduct(item.name, products);
+          return {
+            name: foundProduct ? foundProduct.name : item.name,
+            quantity: item.quantity,
+            category: item.category || '',
+            unit: item.unit || '',
+            status: item.status || 'N/A',
+            supplier: item.supplier || '',
+            productId: foundProduct ? foundProduct._id : null,
+          };
+        })
+      );
+
+      setAlertOpen(false);
+    } catch (error) {
+      console.error('Erro ao processar contagem com OpenAI:', error);
+      setAlertMessage('Erro ao interpretar a contagem. Tente novamente.');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+
+  const handleConfirmImport = async () => {
+    const invalids = parsedItems
+      .map((item, index) => (!item.productId ? index : null))
+      .filter(i => i !== null);
+
+    if (invalids.length > 0) {
+      setInvalidProducts(invalids);
+      setAlertMessage('Existem produtos não cadastrados. Por favor, corrija antes de importar.');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      return;
+    }
+
+    try {
+      await Promise.all(parsedItems.map(async (item) => {
+        const payload = {
+          supplier: item.supplier,
+          category: item.category,
+          product: item.productId,
+          quantity: Number(item.quantity),
+          unit: item.unit,
+          status: item.status,
+          // avgPrice removido, pois não vai no estoque
+        };
+        await addItem(payload);
+      }));
+
+      setInvalidProducts([]);
+      setAlertMessage('Importação concluída com sucesso!');
+      setAlertSeverity('success');
+      setAlertOpen(true);
+      handleCloseImportDialog();
+    } catch (err) {
+      console.error('Erro ao importar itens:', err);
+      setAlertMessage('Erro ao importar itens. Tente novamente.');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    }
+  };
+
+
+  // Função para atualizar um item editado
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...parsedItems];
+    newItems[index][field] = value;
+    setParsedItems(newItems);
+  };
+
+  const [selectedAllSupplier, setSelectedAllSupplier] = useState('');
+  const [selectedAllCategory, setSelectedAllCategory] = useState('');
+  const [selectedAllUnit, setSelectedAllUnit] = useState('');
+
+
+  function handleAssimilateSupplier(supplierId) {
+    setAssimilateSupplier(supplierId);
+    setParsedItems((items) =>
+      items.map((item) => ({
+        ...item,
+        supplier: supplierId,
+      }))
+    );
+  }
+
+
+
+
   return (
     <>
-      <NavBarRestrita />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4">Gestão de Estoque</Typography>
-          {user.role === 'admin' && (
-            <Button variant="contained" onClick={openAdd}>
-              Adicionar Item
-            </Button>
-          )}
+          <Box>
+            {user.role === 'admin' && (
+              <Button variant="contained" onClick={openAdd}>
+                Adicionar Item
+              </Button>
+            )}
+            <Tooltip title="Importar via copiar e colar contagem de mensagem do Whatsapp">
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleOpenImportDialog}
+                sx={{ ml: 1 }}
+              >
+                Importar de Contagem
+              </Button>
+            </Tooltip>
+          </Box>
         </Box>
 
         {anyLoading ? (
@@ -485,7 +623,7 @@ export default function StockPage() {
                   label="Filtrar por Categoria"
                 >
                   <MenuItem value="">Todas</MenuItem>
-                  {categories.map(cat => (
+                  {ctxCategories.map(cat => (
                     <MenuItem key={cat._id} value={cat._id}>
                       {cat.name}
                     </MenuItem>
@@ -566,9 +704,9 @@ export default function StockPage() {
                       typeof item.unit === 'string'
                         ? item.unit
                         : item.unit?._id;
-                    const unitObj = units.find(u => u._id === unitId);
+                    const unitObj = ctxUnits.find(u => u._id === unitId);
                     const Icon = unitIcons[unitObj?.iconName] || unitIcons.default;
-                    const catObj = categories.find(c => c._id === item.category?._id);
+                    const catObj = ctxCategories.find(c => c._id === item.category?._id);
                     const lastDate = item.updatedAt || item.createdAt;
 
                     return (
@@ -591,7 +729,7 @@ export default function StockPage() {
                             '-'
                           )}
                         </TableCell>
-                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.product?.name || '-'}</TableCell>
                         <TableCell>{item.quantity ?? '-'}</TableCell>
                         <TableCell>
                           <Box display="flex" alignItems="center" gap={1}>
@@ -604,31 +742,39 @@ export default function StockPage() {
                         </TableCell>
                         <TableCell>{item.supplier?.name || '-'}</TableCell>
                         <TableCell>
-                          {item.avgPrice != null
-                            ? new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            }).format(item.avgPrice)
+                          {item.product?.avgPrice != null
+                            ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.product.avgPrice)
                             : '-'}
                         </TableCell>
+
                         <TableCell align="right">
                           {user.role === 'admin' ? (
-                            <>
-                              <Button size="small" onClick={() => openEdit(item)}>
-                                Editar
-                              </Button>
-                              <Button
-                                size="small"
-                                color="error"
-                                onClick={() => openDelete(item)}
-                              >
-                                Excluir
-                              </Button>
-                            </>
+                            <Box display="flex" justifyContent="flex-end" gap={1}>
+                              <Tooltip title="Editar">
+                                <Button
+                                  size="small"
+                                  onClick={() => openEdit(item)}
+                                  sx={{ minWidth: 'auto', padding: '4px' }}
+                                >
+                                  <EditIcon fontSize="small" sx={{ color: '#1976d2 !important' }} />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Excluir">
+                                <Button
+                                  size="small"
+                                  onClick={() => openDelete(item)}
+                                  sx={{ minWidth: 'auto', padding: '4px' }}
+                                >
+                                  <DeleteIcon fontSize="small" sx={{ color: '#d32f2f !important' }} />
+                                </Button>
+                              </Tooltip>
+                            </Box>
                           ) : (
                             <Typography color="textSecondary">Acesso restrito</Typography>
                           )}
                         </TableCell>
+
+
                       </TableRow>
                     );
                   })}
@@ -654,23 +800,13 @@ export default function StockPage() {
         <Dialog open={openDialog} onClose={closeDialog} maxWidth="sm" fullWidth>
           <DialogTitle>{editingItem ? 'Editar Item' : 'Adicionar Novo Item'}</DialogTitle>
           <DialogContent>
+            {importLoading && (
+              <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+                <CircularProgress />
+                <Typography ml={2}>Analisando a contagem... Por favor aguarde.</Typography>
+              </Box>
+            )}
             {/* (todo o formulário original permanece) */}
-            {/* INÍCIO FILTRO POR DATA */}
-            <TextField
-              label="Data Início"
-              type="date"
-              value={filterStartDate}
-              onChange={e => setFilterStartDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="Data Fim"
-              type="date"
-              value={filterEndDate}
-              onChange={e => setFilterEndDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-            {/* FIM FILTRO POR DATA */}
 
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Categoria</InputLabel>
@@ -680,7 +816,7 @@ export default function StockPage() {
                 onChange={handleChange}
                 label="Categoria"
               >
-                {categories.map(cat => (
+                {ctxCategories.map(cat => (
                   <MenuItem key={cat._id} value={cat._id}>
                     {cat.name}
                   </MenuItem>
@@ -688,14 +824,24 @@ export default function StockPage() {
               </Select>
             </FormControl>
 
-            <TextField
-              name="name"
-              label="Nome do Item"
-              fullWidth
+            {/* Produto: autocomplete para _id do Product */}
+            <Autocomplete
               sx={{ mt: 2 }}
-              value={formValues.name}
-              onChange={handleChange}
-              onBlur={handleNameBlur}
+              options={products}                                // array de objetos Product
+              getOptionLabel={(prod) => prod.name}             // exibe o name
+              isOptionEqualToValue={(opt, val) => opt._id === val._id}
+              value={products.find(p => p._id === formValues.product) || null}
+              onChange={(_, selected) =>
+                setFormValues(f => ({ ...f, product: selected ? selected._id : '' }))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Produto"
+                  fullWidth
+                  required
+                />
+              )}
             />
 
             <TextField
@@ -710,10 +856,10 @@ export default function StockPage() {
 
             <Autocomplete
               sx={{ mt: 2 }}
-              options={units}
+              options={ctxUnits}
               getOptionLabel={u => u.name}
               isOptionEqualToValue={(o, v) => o._id === v?._id}
-              value={units.find(u => u._id === formValues.unit) || null}
+              value={ctxUnits.find(u => u._id === formValues.unit) || null}
               onChange={(_, newVal) =>
                 setFormValues(v => ({ ...v, unit: newVal ? newVal._id : '' }))
               }
@@ -730,7 +876,7 @@ export default function StockPage() {
                 );
               }}
               renderInput={params => {
-                const sel = units.find(u => u._id === formValues.unit);
+                const sel = ctxUnits.find(u => u._id === formValues.unit);
                 const IconSel = unitIcons[sel?.iconName] || unitIcons.default;
                 return (
                   <TextField
@@ -781,35 +927,6 @@ export default function StockPage() {
               )}
             />
 
-            {/* Autocomplete de Preço Médio */}
-            <Autocomplete
-              freeSolo
-              sx={{ mt: 2 }}
-              options={priceOptions}
-              getOptionLabel={opt =>
-                typeof opt === 'number' ? opt.toFixed(2) : opt
-              }
-              value={formValues.avgPrice}
-              onInputChange={(_, val) =>
-                setFormValues(v => ({ ...v, avgPrice: val }))
-              }
-              renderInput={params => (
-                <TextField
-                  {...params}
-                  name="avgPrice"
-                  label="Preço Médio"
-                  fullWidth
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <InputAdornment position="start">R$</InputAdornment>
-                    ),
-                    inputProps: { min: 0, step: 0.01, ...params.inputProps },
-                  }}
-                />
-              )}
-            />
-
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Status</InputLabel>
               <Select
@@ -853,12 +970,257 @@ export default function StockPage() {
           </DialogActions>
         </Dialog>
 
+        {/* Dialog de Importação */}
+        <Dialog
+          open={openImportDialog}
+          onClose={() => setOpenImportDialog(false)}
+          fullWidth
+          maxWidth={false}
+          sx={{ '& .MuiDialog-paper': { width: 1000, maxWidth: '95vw' } }}
+        >
+          <DialogTitle>Importar Estoque de Contagem</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Cole aqui a contagem"
+              multiline
+              rows={10}
+              fullWidth
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              sx={{ mt: 2 }}  // margem superior de 16px (padrão do MUI)
+              variant="outlined"
+            />
+            <LoadingButton
+              loading={importLoading}
+              onClick={handleParseImportText}
+              variant="contained"
+              sx={{ mt: 2 }}
+            >
+              Processar Contagem
+            </LoadingButton>
+
+            {parsedItems.length > 0 && (
+              <>
+                <TableContainer component={Paper} sx={{ mt: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ minWidth: 150 }} align="right">
+                          <FormControl fullWidth variant="standard" size="small">
+                            <InputLabel>Assimilar Categoria</InputLabel>
+                            <Select
+                              value={selectedAllCategory}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setSelectedAllCategory(val);
+                                if (val) {
+                                  setParsedItems(items => items.map(i => ({ ...i, category: val })));
+                                }
+                              }}
+                              label="Assimilar Categoria"
+                            >
+                              <MenuItem value="">Nenhuma</MenuItem>
+                              {ctxCategories.map(cat => (
+                                <MenuItem key={cat._id} value={cat._id}>
+                                  {cat.name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+
+                        <TableCell sx={{ minWidth: 150 }} align="right">
+                          <FormControl fullWidth variant="standard" size="small">
+                            <InputLabel>Assimilar Unidade</InputLabel>
+                            <Select
+                              value={selectedAllUnit}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setSelectedAllUnit(val);
+                                if (val) {
+                                  setParsedItems(items => items.map(i => ({ ...i, unit: val })));
+                                }
+                              }}
+                              label="Assimilar Unidade"
+                            >
+                              <MenuItem value="">Nenhuma</MenuItem>
+                              {ctxUnits.map(unit => (
+                                <MenuItem key={unit._id} value={unit._id}>
+                                  {unit.name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+
+                        <TableCell sx={{ minWidth: 150 }} align="right">
+                          <FormControl fullWidth variant="standard" size="small">
+                            <InputLabel>Assimilar Fornecedor</InputLabel>
+                            <Select
+                              value={selectedAllSupplier}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setSelectedAllSupplier(val);
+                                if (val) {
+                                  setParsedItems(items => items.map(i => ({ ...i, supplier: val })));
+                                }
+                              }}
+                              label="Assimilar Fornecedor"
+                            >
+                              <MenuItem value="">Nenhuma</MenuItem>
+                              {suppliers.map(sup => (
+                                <MenuItem key={sup._id} value={sup._id}>
+                                  {sup.name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+
+                        {/* Colunas vazias para alinhamento correto com a segunda linha */}
+                        <TableCell />
+                        <TableCell />
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell sx={{ minWidth: 300 }}>Produto</TableCell>
+                        <TableCell sx={{ minWidth: 150 }}>Categoria</TableCell>
+                        <TableCell sx={{ minWidth: 150 }}>Unidade</TableCell>
+                        <TableCell sx={{ minWidth: 150 }}>Fornecedor</TableCell>
+                        <TableCell sx={{ minWidth: 50 }}>Qtde</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+
+                    <TableBody>
+                      {parsedItems.map((item, index) => {
+                        const selectedSupplier = suppliers.find(s => s._id === item.supplier);
+
+                        return (
+                          <TableRow key={index}>
+                            {/* Produto */}
+                            <TableCell sx={{ width: '30%' }}>
+                              <Autocomplete
+                                freeSolo
+                                options={products.map(p => p.name)}
+                                value={item.name}
+                                onChange={(event, newValue) => {
+                                  handleItemChange(index, 'name', newValue);
+                                  const product = products.find(p => p.name === newValue);
+                                  if (product) {
+                                    handleItemChange(index, 'productId', product._id);
+                                    handleItemChange(index, 'category', product.categoryId || '');
+                                    handleItemChange(index, 'unit', product.unitId || '');
+                                  } else {
+                                    handleItemChange(index, 'productId', null);
+                                    alert('Produto não encontrado. Por favor, crie o produto primeiro.');
+                                  }
+                                }}
+                                renderInput={(params) => <TextField {...params} variant="standard" />}
+                              />
+                            </TableCell>
+
+                            {/* Categoria */}
+                            <TableCell sx={{ width: '15%' }}>
+                              <FormControl fullWidth variant="standard">
+                                <InputLabel>Categoria</InputLabel>
+                                <Select
+                                  value={item.category}
+                                  onChange={(e) => handleItemChange(index, 'category', e.target.value)}
+                                >
+                                  {ctxCategories.map(cat => (
+                                    <MenuItem key={cat._id} value={cat._id}>
+                                      {cat.name}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </TableCell>
+
+                            {/* Unidade */}
+                            <TableCell sx={{ width: '15%' }}>
+                              <FormControl fullWidth variant="standard">
+                                <InputLabel>Unidade</InputLabel>
+                                <Select
+                                  value={item.unit || ''}
+                                  onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                                >
+                                  {ctxUnits.map(unit => (
+                                    <MenuItem key={unit._id} value={unit._id}>
+                                      {unit.name}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </TableCell>
+
+                            {/* Fornecedor */}
+                            <TableCell sx={{ width: '15%' }}>
+                              <Autocomplete
+                                options={suppliers}
+                                getOptionLabel={(option) => option.name || ''}
+                                value={selectedSupplier || null}
+                                onChange={(_, newVal) => {
+                                  handleItemChange(index, 'supplier', newVal ? newVal._id : '');
+                                }}
+                                renderInput={(params) => <TextField {...params} variant="standard" />}
+                              />
+                            </TableCell>
+
+                            {/* Quantidade */}
+                            <TableCell sx={{ width: '10%' }}>
+                              <TextField
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '');
+                                  handleItemChange(index, 'quantity', val);
+                                }}
+                                variant="standard"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {/* aqui inserimos o componente que vai criar as saídas diárias */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <StockDailyCount
+                    parsedCounts={parsedItems.map(item => ({
+                      product: item.productId,
+                      quantity: Number(item.quantity),
+                      type: 'saida',
+                      reason: 'Contagem diária'
+                    }))}
+                  />
+                </Box>
+              </>
+
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenImportDialog(false)} color="secondary">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmImport}
+              color="primary"
+              variant="contained"
+              disabled={importLoading || parsedItems.length === 0}
+            >
+              Confirmar Importação
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <ValidationAlert
           open={alertOpen}
           severity={alertSeverity}
           message={alertMessage}
           onClose={() => setAlertOpen(false)}
         />
+
       </Container>
     </>
   );

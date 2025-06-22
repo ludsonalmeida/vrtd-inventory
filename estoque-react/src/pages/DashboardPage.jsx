@@ -8,7 +8,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStock } from '../contexts/StockContext';
 import { useCategory } from '../contexts/CategoryContext';
 import { useNavigate } from 'react-router-dom';
-import NavBarRestrita from '../components/NavBarRestrita';
 
 import {
   Container,
@@ -105,7 +104,6 @@ export default function DashboardPage() {
   if (stockLoading || catLoading) {
     return (
       <>
-        <NavBarRestrita />
         <Container sx={{ mt: 4, textAlign: 'center' }}>
           <CircularProgress />
           <Typography variant="h6" sx={{ mt: 2 }}>
@@ -123,7 +121,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <NavBarRestrita />
+     
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Header */}
         <Box sx={{ p: 3, border: '2px solid #FFA500', borderRadius: 2, mb: 4 }} textAlign="center">

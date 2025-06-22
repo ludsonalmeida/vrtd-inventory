@@ -23,7 +23,6 @@ import {
 
 import { useCategory } from '../contexts/CategoryContext';
 import { useAuth } from '../contexts/AuthContext';
-import NavBarRestrita from '../components/NavBarRestrita';
 import ValidationAlert from '../components/ValidationAlert';
 
 export default function CategoriesPage() {
@@ -134,8 +133,6 @@ export default function CategoriesPage() {
 
   return (
     <>
-      <NavBarRestrita />
-
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4">Categorias</Typography>
