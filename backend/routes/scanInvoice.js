@@ -33,11 +33,6 @@ router.post('/', upload.single('invoice'), async (req, res) => {
     const prompt = `
 Texto extraído da nota fiscal:
 ${rawText}
-
-Texto extraído da nota fiscal:
-${rawText}
-
-
 Você é um parser de notas fiscais e comandas. Receberá como entrada o texto bruto extraído por OCR de um documento de venda ou nota fiscal, de formato livre, e deve retornar apenas um JSON com uma lista de objetos, cada um contendo:
 
 name: a descrição completa do produto.
