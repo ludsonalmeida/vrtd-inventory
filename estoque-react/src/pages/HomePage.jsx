@@ -1,4 +1,6 @@
 // src/pages/HomePage.jsx
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 import React, { useState, useEffect } from 'react';
 import NavBar from '../components/NavBar';
 import HeroSection from '../components/HeroSection';
@@ -81,7 +83,8 @@ export default function HomePage() {
   // Envio de reserva
   const handleReservationSubmit = async data => {
     try {
-      const response = await fetch('/api/reservations', {
+      const response = await fetch(
+        `${API_BASE}/api/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
