@@ -68,7 +68,7 @@ export function AuthProvider({ children }) {
   async function signIn({ email, password }) {
     console.log('[AuthContext] signIn chamado com:', { email, password });
     try {
-      const response = await api.post('/api/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       console.log('[AuthContext] Resposta do POST /auth/login:', response.data);
 
       const { token, user: userData } = response.data;
