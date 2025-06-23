@@ -18,27 +18,25 @@ export default function ContactModal({ open, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+    if (!validate()) return;
 
     try {
-      const res = await fetch('contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      await api.post('/contact', {
+        name: form.name,
+        email: form.email,
+        message: form.message
       });
-
-      if (!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        setSnackbar({ open: true, message: error.error || 'Erro ao enviar mensagem', severity: 'error' });
-        return;
-      }
-
-      // Mensagem de sucesso e fechar modal
-      setSnackbar({ open: true, message: 'Mensagem enviada com sucesso!', severity: 'success' });
+      setSnackbar({
+        open: true,
+        message: 'Mensagem enviada com sucesso!',
+        severity: 'success'
+      });
+      setForm({ name: '', email: '', message: '' });
       onClose();
     } catch (err) {
-      setSnackbar({ open: true, message: 'Erro ao enviar mensagem. Tente novamente.', severity: 'error' });
+      console.error('[ContactModal] Erro ao enviar contato:', err);
+      const msg = err.response?.data?.error || err.message || 'Erro ao enviar mensagem';
+      setSnackbar({ open: true, message: msg, severity: 'error' });
     }
   };
 
