@@ -26,7 +26,7 @@ export default function ReservationsPage() {
   const [modalOpen, setModalOpen]       = useState(false);
 
   // Usa URL absoluta do backend para evitar proxy
-  const BASE_URL = 'http://localhost:4000';
+  const BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     async function load() {

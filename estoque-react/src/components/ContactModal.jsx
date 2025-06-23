@@ -14,7 +14,7 @@ import {
 import PropTypes from 'prop-types';
 
 // Base URL da API via variável de ambiente (Vite)
-const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export default function ContactModal({ open, onClose }) {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
