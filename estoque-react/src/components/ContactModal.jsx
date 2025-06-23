@@ -13,9 +13,6 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
-// Base URL da API via variável de ambiente (Vite)
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
 export default function ContactModal({ open, onClose }) {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -25,7 +22,7 @@ export default function ContactModal({ open, onClose }) {
     const data = Object.fromEntries(formData.entries());
 
     try {
-      const res = await fetch(`${BASE_URL}/api/contact`, {
+      const res = await fetch('contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

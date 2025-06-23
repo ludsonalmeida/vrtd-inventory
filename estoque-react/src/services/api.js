@@ -1,8 +1,8 @@
 import axios from 'axios';
-console.log(import.meta.env.VITE_API_URL)
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 // Configuração central do Axios
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000',
+   baseURL: `${BASE}/api`,   // <— adiciona o "/api" aqui uma vez só
   timeout: 60000,
 });
 
