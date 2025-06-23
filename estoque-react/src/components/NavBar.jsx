@@ -118,7 +118,7 @@ export default function NavBar() {
                   primary={item.label}
                   primaryTypographyProps={{
                     fontFamily: 'Alfa Slab One',
-                    fontWeight: 700,
+                    fontWeight: 400,
                     fontSize: '1rem',
                     color: '#333',
                   }}
