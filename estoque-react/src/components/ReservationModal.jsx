@@ -51,9 +51,7 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
   // Slider state
   const [slideIndex, setSlideIndex] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSlideIndex(prev => (prev + 1) % images.length);
-    }, 3000);
+    const interval = setInterval(() => setSlideIndex(prev => (prev + 1) % images.length), 3000);
     return () => clearInterval(interval);
   }, [images.length]);
 
@@ -113,7 +111,15 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
     area: touched.area && !['Coberta', 'Descoberta', 'Porks Deck'].includes(form.area)
   };
   const isValid = ['date','time','name','phone','people','area'].every(f => !errors[f] && form[f]);
-  const handleConfirm = () => { onSubmit(form); onClose(); };
+
+  // Ação de confirmação: envia dados e aciona evento personalizado do Meta Pixel
+  const handleConfirm = () => {
+    if (window.fbq) {
+      window.fbq('trackCustom', 'Reserva Efetuada', { people: form.people, area: form.area });
+    }
+    onSubmit(form);
+    onClose();
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -122,19 +128,8 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
         {/* Slider de banner com transição suave */}
         <Box sx={{ position: 'relative', width: '100%', height: 150, mb: 2, overflow: 'hidden', borderRadius: 1 }}>
           {images.map((src, idx) => (
-            <Fade
-              key={idx}
-              in={idx === slideIndex}
-              timeout={500}
-              mountOnEnter
-              unmountOnExit
-            >
-              <Box
-                component="img"
-                src={src}
-                alt={`Slide ${idx + 1}`}
-                sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+            <Fade key={idx} in={idx === slideIndex} timeout={500} mountOnEnter unmountOnExit>
+              <Box component="img" src={src} alt={`Slide ${idx + 1}`} sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             </Fade>
           ))}
         </Box>
@@ -209,9 +204,12 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
               value={form.people}
               label="Para Quantas Pessoas?"
               onChange={handleChange}
-              onBlur={handleBlur('people')}>
+              onBlur={handleBlur('people')}
+            >
               {[...Array(9)].map((_, i) => (
-                <MenuItem key={i+2} value={i+2}>{i+2}</MenuItem>
+                <MenuItem key={i + 2} value={i + 2}>
+                  {i + 2}
+                </MenuItem>
               ))}
               <MenuItem value="10+">Mais de 10 pessoas</MenuItem>
             </Select>
