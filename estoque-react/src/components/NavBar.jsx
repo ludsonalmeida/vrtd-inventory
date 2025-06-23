@@ -114,7 +114,15 @@ export default function NavBar() {
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
                 }}
               >
-                <ListItemText primary={item.label} />
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontFamily: 'Alfa Slab One',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    color: '#333',
+                  }}
+                />
               </ListItem>
             ))}
           </List>
