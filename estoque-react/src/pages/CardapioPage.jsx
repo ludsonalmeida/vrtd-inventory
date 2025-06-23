@@ -1,26 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Button,
   Dialog,
   DialogTitle,
-  DialogContent,
-  DialogActions
+  DialogContent
 } from '@mui/material';
 import PixelLoader from '../components/PixelLoader';
 
 export default function CardapioPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const openMenu = () => setMenuOpen(true);
-  const closeMenu = () => setMenuOpen(false);
+  const [menuOpen] = useState(true);
 
   useEffect(() => {
     // Dispara evento customizado no Meta Pixel
     if (window.fbq) {
       window.fbq('trackCustom', 'Abriu Cardápio');
     }
-    // Abre o modal de cardápio assim que a página monta
-    openMenu();
   }, []);
 
   return (
@@ -28,8 +22,15 @@ export default function CardapioPage() {
       {/* Inicializa Meta Pixel */}
       <PixelLoader />
 
-      {/* Modal exibindo as páginas do cardápio em imagens */}
-      <Dialog open={menuOpen} onClose={closeMenu} fullWidth maxWidth="md">
+      {/* Modal exibindo as páginas do cardápio, sem opção de fechar */}
+      <Dialog
+        open={menuOpen}
+        fullWidth
+        maxWidth="md"
+        // Não permitir fechar com clique fora ou ESC
+        onClose={() => {}}
+        disableEscapeKeyDown
+      >
         <DialogTitle>Cardápio</DialogTitle>
         <DialogContent sx={{ p: 0 }}>
           <Box
@@ -47,9 +48,6 @@ export default function CardapioPage() {
             sx={{ display: 'block', mt: 2 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeMenu}>Fechar</Button>
-        </DialogActions>
       </Dialog>
     </>
   );
