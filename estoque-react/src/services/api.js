@@ -2,7 +2,7 @@ import axios from 'axios';
 console.log(import.meta.env.VITE_API_URL)
 // Configuração central do Axios
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000',
   timeout: 60000,
 });
 
