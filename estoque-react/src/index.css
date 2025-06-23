@@ -7,6 +7,11 @@
   box-sizing: border-box;
 }
 
+html, body, #root {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 /* 2. Fonte padrão */
 body {
   font-family: Arial, sans-serif;
