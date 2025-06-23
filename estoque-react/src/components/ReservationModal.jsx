@@ -28,7 +28,7 @@ function formatPhone(value) {
   let formatted = '';
   if (part1) formatted = `(${part1}) `;
   if (rest.length <= 5) formatted += rest;
-  else formatted += `${rest.slice(0,5)}-${rest.slice(5,9)}`;
+  else formatted += `${rest.slice(0, 5)}-${rest.slice(5, 9)}`;
   return formatted;
 }
 
@@ -87,7 +87,7 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
   const handleBlur = field => () => setTouched(prev => ({ ...prev, [field]: true }));
 
   // Validações de data apenas
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   let dateValid = true;
   if (form.date) {
     const [y, m, d] = form.date.split('-').map(Number);
@@ -106,17 +106,28 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
     date: touched.date && (!form.date || !dateValid),
     time: touched.time && (!form.time || !dateTimeValid),
     name: touched.name && !form.name.trim(),
-    phone: touched.phone && form.phone.replace(/\D/g,'').length < 10,
+    phone: touched.phone && form.phone.replace(/\D/g, '').length < 10,
     people: touched.people && !(form.people === '10+' || Number(form.people) >= 2),
     area: touched.area && !['Coberta', 'Descoberta', 'Porks Deck'].includes(form.area)
   };
-  const isValid = ['date','time','name','phone','people','area'].every(f => !errors[f] && form[f]);
+  const isValid = ['date', 'time', 'name', 'phone', 'people', 'area'].every(f => !errors[f] && form[f]);
 
   // Ação de confirmação: envia dados e aciona evento personalizado do Meta Pixel
   const handleConfirm = () => {
     if (window.fbq) {
       window.fbq('trackCustom', 'Reserva Efetuada', { people: form.people, area: form.area });
     }
+
+    // Disparar evento personalizado no GA4
+    if (typeof gtag === 'function') {
+      gtag('event', 'reserva_efetuada', {
+        event_category: 'Reservas',
+        event_label: form.name,
+        value: form.people,
+      });
+      console.log('Evento GA4: reserva_efetuada enviado');
+    }
+
     onSubmit(form);
     onClose();
   };
@@ -154,6 +165,7 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
             error={errors.date}
             helperText={errors.date ? (!form.date ? 'Data é obrigatória' : 'Data anterior ao dia de hoje') : ''}
             fullWidth
+            size="medium"
           />
 
           <TextField
@@ -169,6 +181,7 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
             error={errors.time}
             helperText={errors.time ? (!form.time ? 'Horário é obrigatório' : 'Horário anterior ao agora') : ''}
             fullWidth
+            size="medium"
           />
 
           <TextField
@@ -180,6 +193,7 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
             error={errors.name}
             helperText={errors.name ? 'Obrigatório' : ''}
             fullWidth
+            size="medium"
           />
 
           <TextField
@@ -194,6 +208,7 @@ export default function ReservationModal({ open, onClose, onSubmit, initialData 
             helperText={errors.phone ? 'Formato inválido' : ''}
             inputProps={{ inputMode: 'numeric' }}
             fullWidth
+            size="medium"
           />
 
           <FormControl fullWidth error={errors.people}>

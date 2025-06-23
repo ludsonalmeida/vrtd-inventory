@@ -15,6 +15,14 @@ export default function CardapioPage() {
     if (window.fbq) {
       window.fbq('trackCustom', 'Abriu Cardápio');
     }
+
+    if (typeof gtag === 'function') {
+      gtag('event', 'abriu_cardapio', {
+        event_category: 'Cardapio',
+        event_label: 'Página Cardápio Aberta',
+      });
+      console.log('Evento GA4: abriu_cardapio enviado');
+    }
   }, []);
 
   return (

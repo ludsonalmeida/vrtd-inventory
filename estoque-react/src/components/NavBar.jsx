@@ -30,12 +30,27 @@ export default function NavBar() {
     { label: 'Contato', id: 'contato' }
   ];
 
+  const scrollToSection = (id) => {
+    const target = document.getElementById(id);
+    if (target) {
+      const yOffset = -80; // Ajuste conforme a altura real da sua navbar
+      const y = target.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+      window.scrollTo({
+        top: y,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const handleNav = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const yOffset = -80; // ajusta 80px acima
-      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+    if (isMobile) {
+      setDrawerOpen(false);
+      setTimeout(() => {
+        scrollToSection(id);
+      }, 300);
+    } else {
+      scrollToSection(id);
     }
   };
 
@@ -64,11 +79,28 @@ export default function NavBar() {
 
   const renderMobileMenu = () => (
     <>
-      <IconButton edge="end" onClick={toggleDrawer} sx={{ color: '#333', marginLeft: 'auto' }}>
-        <MenuIcon />
+      <IconButton
+        edge="end"
+        onClick={toggleDrawer}
+        sx={{
+          color: '#333',
+          ml: 3, // margem esquerda maior
+          mr: 2, // margem direita também (respiro da borda)
+          mt: 1,
+          p: 1.5,
+          borderRadius: 2,
+          backgroundColor: 'rgba(0,0,0,0.05)',
+          '&:hover': {
+            backgroundColor: 'rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        <MenuIcon fontSize="large" />
       </IconButton>
+
+
       <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer}>
-        <Box sx={{ width: 240, bgcolor: '#F59E0B' }} role="presentation" onClick={toggleDrawer}>
+        <Box sx={{ width: 240, bgcolor: '#F59E0B' }} role="presentation">
           <List>
             {navItems.map(item => (
               <ListItem
@@ -92,7 +124,7 @@ export default function NavBar() {
   );
 
   return (
-    <AppBar position="sticky" sx={{ bgcolor: '#F59E0B', boxShadow: 'none' }}>
+    <AppBar position="fixed" sx={{ bgcolor: '#F59E0B', boxShadow: 'none' }}>
       <Toolbar sx={{ px: { xs: 1, md: 4 }, justifyContent: 'space-between' }}>
         <Box
           component="img"
