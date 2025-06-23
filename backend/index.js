@@ -34,9 +34,13 @@ mongoose
 
 // 2) Middlewares globais
 app.use(cors({
-  origin: [ 'http://localhost:5173', 'https://sobradinhoporks.com.br', 'https://api.sobradinhoporks.com.br' ],
+  origin: [
+    'http://localhost:5173',          // dev
+    'https://sobradinhoporks.com.br', // front prod
+    'https://api.sobradinhoporks.com.br'  // caso chame direto
+  ],
   methods: ['GET','POST','PUT','DELETE'],
-  allowedHeaders: ['Content-Type','Authorization'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
 
 app.use(express.json());
