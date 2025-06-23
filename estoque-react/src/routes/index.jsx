@@ -21,7 +21,7 @@ import EditUserPage from '../pages/EditUserPage.jsx';
 import ReservationsPage from '../pages/ReservationsPage';
 import CMVDashboard from '../pages/CMVDashboard';
 import StockMovements from '../pages/StockMovements';
-
+import CardapioPage from '../pages/CardapioPage';  // <-- import
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -62,6 +62,7 @@ export default function AppRoutes() {
 
                   {/* Páginas principais */}
                   <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="/cardapio" element={<CardapioPage />} />    {/* nova rota */}
                   <Route path="products" element={<ProductPage />} />
                   <Route path="estoque" element={<StockPage />} />
                   <Route path="categories" element={<CategoriesPage />} />
