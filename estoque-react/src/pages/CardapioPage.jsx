@@ -11,18 +11,28 @@ export default function CardapioPage() {
   const [menuOpen] = useState(true);
 
   useEffect(() => {
-    // Dispara evento customizado no Meta Pixel
-    if (window.fbq) {
-      window.fbq('trackCustom', 'Abriu Cardápio');
-    }
+    const timer = setTimeout(() => {
+      // Meta Pixel
+      if (window.fbq) {
+        window.fbq('trackCustom', 'Abriu Cardápio');
+        console.log('Meta Pixel: Abriu Cardápio');
+      } else {
+        console.warn('Meta Pixel não encontrado');
+      }
 
-    if (typeof gtag === 'function') {
-      gtag('event', 'abriu_cardapio', {
-        event_category: 'Cardapio',
-        event_label: 'Página Cardápio Aberta',
-      });
-      console.log('Evento GA4: abriu_cardapio enviado');
-    }
+      // GA4
+      if (typeof gtag === 'function') {
+        gtag('event', 'abriu_cardapio', {
+          event_category: 'Cardapio',
+          event_label: 'Página Cardápio Aberta',
+        });
+        console.log('Evento GA4: abriu_cardapio enviado');
+      } else {
+        console.warn('gtag não encontrado');
+      }
+    }, 500); // Pequeno delay pra garantir que os scripts carregaram
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -35,7 +45,6 @@ export default function CardapioPage() {
         open={menuOpen}
         fullWidth
         maxWidth="md"
-        // Não permitir fechar com clique fora ou ESC
         onClose={() => {}}
         disableEscapeKeyDown
       >
