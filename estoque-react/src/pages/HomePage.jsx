@@ -81,8 +81,19 @@ export default function HomePage() {
   const handleCloseContact = () => setContactOpen(false);
   const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
+  function gerarNomeImagem(dia) {
+    return dia
+      .toLowerCase()
+      .replace('ç', 'c')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '') + '.jpg';
+  }
+
+
+
   // Envio de reserva
-   const handleReservationSubmit = async data => {
+  const handleReservationSubmit = async data => {
     try {
       await api.post('/reservations', data);
       setSnackbar({ open: true, message: 'Reserva criada com sucesso! Nossa equipe entrará em contato nos horários de funcionamento: terça a domingo 16h–00h', severity: 'success' });
@@ -96,16 +107,43 @@ export default function HomePage() {
 
   return (
     <>
-     <PixelLoader />
+      <PixelLoader />
       <NavBar />
       <Box id="home"><HeroSection /></Box>
 
       {/* Carrossel de Eventos da Semana */}
       <Container id="eventos" sx={{ mt: 6, mb: 6 }}>
-        <Typography variant="h4" align="center" gutterBottom>
+        <Typography
+          variant="h4"
+          align="center"
+          gutterBottom
+          sx={{
+            fontFamily: 'Alfa Slab One',
+            fontSize: { xs: 28, md: 36 },
+            color: '#fff',
+            mb: 4,
+            textShadow: '1px 1px 2px rgba(0,0,0,0.6)'
+          }}
+        >
           Eventos da Semana
         </Typography>
-        <Box sx={{ position: 'relative', width: '100%', maxWidth: 400, mx: 'auto', mb: 2, height: 180 }}>
+
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: 600,
+            mx: 'auto',
+            height: 300, // Altura fixa pra evitar sobreposição na transição
+            borderRadius: 2,
+            overflow: 'hidden',
+            bgcolor: '#1f1f1f',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
           {events.map((evt, idx) => (
             <Fade
               key={evt.day}
@@ -114,38 +152,109 @@ export default function HomePage() {
               mountOnEnter
               unmountOnExit
             >
-              <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%' }}>
-                <Card sx={{ px: 2, py: 1 }}>
-                  <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                    <Typography variant="h6" align="center" sx={{ mb: 1 }}>
-                      {evt.day}
-                    </Typography>
-                    <Typography variant="subtitle1" align="center" sx={{ mb: 0.5 }}>
-                      {evt.title}
-                    </Typography>
-                    <Typography variant="body2" align="center" color="textSecondary">
-                      {evt.time}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Box>
+              <Card
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  textAlign: 'center',
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                  backgroundImage: `url(https://porks.nyc3.cdn.digitaloceanspaces.com/eventos/${gerarNomeImagem(evt.day)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    zIndex: 1
+                  }
+                }}
+              >
+                <CardContent sx={{ position: 'relative', zIndex: 2 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: 'Alfa Slab One',
+                      fontSize: { xs: 22, md: 28 },
+                      mb: 1,
+                      textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                    }}
+                  >
+                    {evt.day}
+                  </Typography>
+
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontSize: { xs: 16, md: 18 },
+                      fontWeight: 600,
+                      mb: 1
+                    }}
+                  >
+                    {evt.title}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: { xs: 14, md: 16 },
+                      opacity: 0.9
+                    }}
+                  >
+                    {evt.time}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Fade>
           ))}
+
+          {/* Botões de navegação */}
           <IconButton
             onClick={prevEvent}
-            sx={{ position: 'absolute', top: '50%', left: '-32px', transform: 'translateY(-50%)' }}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: 10,
+              transform: 'translateY(-50%)',
+              color: '#fff',
+              bgcolor: 'rgba(0,0,0,0.4)',
+              zIndex: 3,
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' }
+            }}
           >
-            <KeyboardArrowLeft />
+            <KeyboardArrowLeft fontSize="large" />
           </IconButton>
+
           <IconButton
             onClick={nextEvent}
-            sx={{ position: 'absolute', top: '50%', right: '-32px', transform: 'translateY(-50%)' }}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              right: 10,
+              transform: 'translateY(-50%)',
+              color: '#fff',
+              bgcolor: 'rgba(0,0,0,0.4)',
+              zIndex: 3,
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' }
+            }}
           >
-            <KeyboardArrowRight />
+            <KeyboardArrowRight fontSize="large" />
           </IconButton>
         </Box>
       </Container>
-
       {/* Seção Promoções */}
       <Box id="destaques"><MenuCards /></Box>
 
