@@ -1,5 +1,4 @@
 // src/pages/HomePage.jsx
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 import React, { useState, useEffect } from 'react';
 import NavBar from '../components/NavBar';
@@ -8,6 +7,8 @@ import MenuCards from '../components/MenuCards';
 import ReservationModal from '../components/ReservationModal';
 import ContactModal from '../components/ContactModal';
 import PixelLoader from '../components/PixelLoader';
+import api from '../services/api';
+
 import {
   Container,
   Typography,
@@ -81,25 +82,15 @@ export default function HomePage() {
   const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
   // Envio de reserva
-  const handleReservationSubmit = async data => {
+   const handleReservationSubmit = async data => {
     try {
-      const response = await fetch(
-        '/reservations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        const errMsg = errorBody.error || `Status ${response.status}`;
-        setSnackbar({ open: true, message: `Erro: ${errMsg}`, severity: 'error' });
-      } else {
-        await response.json();
-        setSnackbar({ open: true, message: 'Reserva criada, nossa equipe entrará em contato nos horários de funcionamento para confirmar: terça a domingo das 16h às 00h', severity: 'success' });
-        setReservationOpen(false);
-      }
-    } catch {
-      setSnackbar({ open: true, message: 'Erro de rede ao salvar reserva.', severity: 'error' });
+      await api.post('/reservations', data);
+      setSnackbar({ open: true, message: 'Reserva criada com sucesso! Nossa equipe entrará em contato nos horários de funcionamento: terça a domingo 16h–00h', severity: 'success' });
+      setReservationOpen(false);
+    } catch (err) {
+      console.error('[HomePage] Erro ao criar reserva:', err);
+      const msg = err.response?.data?.error || err.message || 'Erro ao salvar reserva';
+      setSnackbar({ open: true, message: msg, severity: 'error' });
     }
   };
 
