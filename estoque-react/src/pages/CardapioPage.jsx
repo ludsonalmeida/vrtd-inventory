@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 export default function CardapioPage() {
   useEffect(() => {
@@ -9,14 +9,19 @@ export default function CardapioPage() {
   }, []);
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box component="main" sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
+      <Typography variant="h4" component="h1" gutterBottom>
         Nosso Cardápio
       </Typography>
-      {/* Caso queira link direto em vez de iframe */}
-       <Button href="https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio.pdf" target="_blank">
-        Abrir Cardápio em PDF
-      </Button>
+      {/* Conteúdo do cardápio: PDF embutido ou lista de itens */}
+      <Box
+        component="iframe"
+        src="https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio.pdf"
+        width="100%"
+        height="calc(100vh - 160px)"
+        sx={{ border: 0 }}
+        title="Cardápio Completo"
+      />
     </Box>
   );
 }
