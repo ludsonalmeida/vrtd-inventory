@@ -51,13 +51,13 @@ const menuSections = [
     items: [
       {
         name: 'OldWest Burger',
-        description: 'Suculenta costelinha de porco grelhada, coberta por queijo canastra derretido e geleia picante—uma explosão de sabor a cada mordida.',
+        description: 'Suculenta costelinha de porco grelhada, coberta por queijo canastra derretido e geleia picante.',
         price: '25',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/oldwest.jpg',
       },
       {
         name: 'Porks Bacon Burger',
-        description: 'Blend especial de porco com cheddar cremoso e fatias crocantes de bacon que derretem na boca.',
+        description: 'Blend especial de porco com cheddar cremoso e fatias crocantes de bacon.',
         price: '22',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/burger-porksbacon.jpg',
       },
@@ -650,7 +650,7 @@ export default function CardapioPage() {
                     <Box
                       ref={el => (itemRefs.current[key] = el)}
                       sx={{
-                        width: { xs: '40vw', sm: '60vw', md: '320px' },
+                        width: { xs: '45vw', sm: '60vw', md: '320px' },
                         mx: 'auto',
                         borderRadius: 2,
                         overflow: 'hidden',
