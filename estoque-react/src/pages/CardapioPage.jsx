@@ -736,13 +736,17 @@ export default function CardapioPage() {
 
                         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1 }}>
                           <IconButton
-                            onClick={() => shareWhatsApp(item)}
+                            onClick={() => shareWhatsApp(key)}    // <— passamos key, não item
                             aria-label="Compartilhar no WhatsApp"
-                            sx={{ color: '#25D366' }} // WhatsApp green
+                            sx={{ color: '#25D366' }}
                           >
                             <WhatsAppIcon />
                           </IconButton>
-                          <IconButton onClick={() => shareInstagram(key)} className="shareIcon">
+                          <IconButton
+                            onClick={() => shareInstagram(key)}   // já estava correto
+                            aria-label="Compartilhar no Instagram"
+                            sx={{ color: '#e20d58' }}
+                          >
                             <InstagramIcon />
                           </IconButton>
                         </Box>
