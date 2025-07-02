@@ -131,15 +131,6 @@ table th {
   font-weight: bold;
 }
 
-/* Torna todas as MUI SvgIcon brancas por padrão */
-.MuiSvgIcon-root {
-  color: #fff !important;
-}
-
-/* Ícones em adornos de campos de texto (InputAdornment) */
-.MuiInputAdornment-root .MuiSvgIcon-root {
-  color: #fff !important;
-}
 
 /* força o indicador do datepicker do Chrome/Safari a ficar branco */
 input[type="date"]::-webkit-calendar-picker-indicator {
@@ -149,4 +140,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* para Firefox (se suportado) */
 input[type="date"]::-moz-calendar-picker-indicator {
   filter: invert(1);
+}
+
+/* src/pages/CardapioPage.css */
+.shareIcon {
+  color: #e1306c !important;
 }

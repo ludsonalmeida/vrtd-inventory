@@ -20,6 +20,7 @@
     "axios": "^1.9.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "html2canvas": "^1.4.1",
     "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -29,6 +30,7 @@
     "react-number-format": "^5.4.4",
     "react-router-dom": "^7.6.1",
     "recharts": "^2.15.3",
+    "sweetalert2": "^11.22.2",
     "twilio": "^5.7.1",
     "uuid": "^11.1.0"
   },

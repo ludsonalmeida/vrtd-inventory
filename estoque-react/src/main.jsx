@@ -93,13 +93,7 @@ const theme = createTheme({
         },
       },
     },
-    MuiSvgIcon: {
-      styleOverrides: {
-        root: {
-          color: '#ffffff',       // define cor branca para todos os SvgIcon
-        },
-      },
-    },
+
     MuiOutlinedInput: {
       defaultProps: {
         notched: true,
