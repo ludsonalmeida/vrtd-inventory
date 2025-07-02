@@ -801,14 +801,20 @@ export default function CardapioPage() {
 
                         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1 }}>
                           <IconButton
-                            onClick={() => shareWhatsApp(key)}    // <— passamos key, não item
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              shareWhatsApp(key);
+                            }}
                             aria-label="Compartilhar no WhatsApp"
                             sx={{ color: '#25D366' }}
                           >
                             <WhatsAppIcon />
                           </IconButton>
                           <IconButton
-                            onClick={() => shareInstagram(key)}   // já estava correto
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              shareInstagram(key);
+                            }}
                             aria-label="Compartilhar no Instagram"
                             sx={{ color: '#e20d58' }}
                           >
