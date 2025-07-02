@@ -466,23 +466,24 @@ export default function CardapioPage() {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const openModal = (item) => {
-    setSelectedItem(item);
-    setIsOpen(true);
+    
 
     // Meta Pixel
     if (window.fbq) {
-      window.fbq('trackCustom', `Viu ${item.name}`);
+      window.fbq('trackCustom', 'Viu ' + item.name);
     }
 
-    // GA4
+    // dispara evento no GA4
     if (typeof gtag === 'function') {
       gtag('event', 'view_item', {
         event_category: 'Cardápio',
         event_label: item.name,
-        // opcionalmente, você pode passar item_id, value, etc.
-        item_name: item.name,
+        item_name: item.name
       });
     }
+
+    setSelectedItem(item);
+    setIsOpen(true);
   };
   const closeModal = () => {
     setIsOpen(false);
