@@ -515,28 +515,36 @@ export default function CardapioPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentNav, setCurrentNav] = useState(navTitles[0]);
 
-
-
-  // WhatsApp: abre chat com texto + imagem via link
   const shareWhatsApp = async (key) => {
     const el = itemRefs.current[key];
     if (!el) return;
-    // desenha o card num canvas
-    const canvas = await html2canvas(el, { backgroundColor: null });
-    // converte em blob e cria File
+    const canvas = await html2canvas(el, {
+      useCORS: true,
+      backgroundColor: null,
+      logging: true,      // para você ver no console o que o html2canvas encontrou
+    });
     canvas.toBlob(async blob => {
-      const filesArray = [
-        new File([blob], `${key}.png`, { type: 'image/png' })
-      ];
-      // se o navegador suportar compartilhamento de arquivos
-      if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+      const file = new File([blob], `${key}.png`, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          files: filesArray,
-          title: itemRefs.current[key]?.querySelector('h6')?.innerText,
+          files: [file],
+          title: el.querySelector('h6')?.innerText,
           text: 'Olha que delícia!'
         });
       } else {
-        alert('Seu dispositivo não suporta envio direto de imagem via WhatsApp dessa forma.');
+        // fallback web
+        const text = encodeURIComponent(
+          el.querySelector('h6')?.innerText + '\nOlha que delícia!'
+        );
+        const imageUrl = encodeURIComponent(
+          menuSections
+            .flatMap(section => section.items.map(item => ({
+              key: section.title + item.name,
+              image: item.image
+            })))
+            .find(i => i.key === key)?.image || ''
+        );
+        window.open(`https://web.whatsapp.com/send?text=${text}%0A${imageUrl}`, '_blank');
       }
     });
   };
@@ -545,21 +553,28 @@ export default function CardapioPage() {
   const shareInstagram = async (key) => {
     const el = itemRefs.current[key];
     if (!el) return;
-    const canvas = await html2canvas(el, { backgroundColor: null });
-    canvas.toBlob(async blob => {
-      const filesArray = [
-        new File([blob], 'item.png', { type: 'image/png' })
-      ];
-      if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+    if (navigator.canShare && navigator.canShare({ files: [new File([], '')] })) {
+      const canvas = await html2canvas(el, {
+        backgroundColor: null,
+        useCORS: true,     // ← captura cross-origin
+        allowTaint: false, // ← evita “tainting” do canvas
+      });
+      canvas.toBlob(async blob => {
+        const filesArray = [new File([blob], `${key}.png`, { type: 'image/png' })];
         await navigator.share({
           files: filesArray,
           title: 'Olha esse prato!',
           text: 'Compartilhado do Porks'
         });
-      } else {
-        alert('Compartilhamento não suportado neste dispositivo.');
-      }
-    });
+      });
+    } else {
+      Swal.fire({
+        icon: 'info',
+        title: 'Compartilhar indisponível',
+        text: 'O compartilhamento de imagens via Instagram só funciona em dispositivos móveis.',
+        confirmButtonText: 'OK'
+      });
+    }
   };
 
   // Pixel & GA
@@ -673,6 +688,7 @@ export default function CardapioPage() {
                             component="img"
                             src={item.image}
                             alt={item.name}
+                            crossOrigin="anonymous"
                             sx={{
                               position: 'absolute',
                               top: '50%',
