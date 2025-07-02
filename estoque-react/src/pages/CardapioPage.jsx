@@ -518,56 +518,56 @@ export default function CardapioPage() {
   const shareWhatsApp = async (key) => {
     const el = itemRefs.current[key];
     if (!el) return;
-    const canvas = await html2canvas(el, {
-      useCORS: true,
-      backgroundColor: null,
-      logging: true,      // para você ver no console o que o html2canvas encontrou
-    });
-    canvas.toBlob(async blob => {
+
+    try {
+      // tenta canvas + Web Share API
+      const canvas = await html2canvas(el, { backgroundColor: null, useCORS: true });
+      const blob = await new Promise(res => canvas.toBlob(res));
       const file = new File([blob], `${key}.png`, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+
+      if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: el.querySelector('h6')?.innerText,
           text: 'Olha que delícia!'
         });
-      } else {
-        // fallback web
-        const text = encodeURIComponent(
-          el.querySelector('h6')?.innerText + '\nOlha que delícia!'
-        );
-        const imageUrl = encodeURIComponent(
-          menuSections
-            .flatMap(section => section.items.map(item => ({
-              key: section.title + item.name,
-              image: item.image
-            })))
-            .find(i => i.key === key)?.image || ''
-        );
-        window.open(`https://web.whatsapp.com/send?text=${text}%0A${imageUrl}`, '_blank');
+        return;
       }
-    });
+    } catch (_) { /* sem Web Share API ou erro de CORS */ }
+
+    // fallback desktop ou erro: abre WhatsApp Web com link para imagem
+    const text = encodeURIComponent(el.querySelector('h6')?.innerText + '\nOlha que delícia!');
+    const imageUrl = encodeURIComponent(
+      menuSections
+        .flatMap(section => section.items.map(item => ({
+          key: section.title + item.name,
+          image: item.image
+        })))
+        .find(i => i.key === key)?.image || ''
+    );
+    window.open(`https://web.whatsapp.com/send?text=${text}%0A${imageUrl}`, '_blank');
   };
 
-  // Instagram (e outros): captura o card em canvas e dispara Web Share API
+  // Compartilha via Instagram (só mobile)
   const shareInstagram = async (key) => {
     const el = itemRefs.current[key];
     if (!el) return;
-    if (navigator.canShare && navigator.canShare({ files: [new File([], '')] })) {
-      const canvas = await html2canvas(el, {
-        backgroundColor: null,
-        useCORS: true,     // ← captura cross-origin
-        allowTaint: false, // ← evita “tainting” do canvas
-      });
-      canvas.toBlob(async blob => {
-        const filesArray = [new File([blob], `${key}.png`, { type: 'image/png' })];
+
+    try {
+      const canvas = await html2canvas(el, { backgroundColor: null, useCORS: true });
+      const blob = await new Promise(res => canvas.toBlob(res));
+      const file = new File([blob], `${key}.png`, { type: 'image/png' });
+
+      if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
-          files: filesArray,
+          files: [file],
           title: 'Olha esse prato!',
           text: 'Compartilhado do Porks'
         });
-      });
-    } else {
+      } else {
+        throw new Error('No WebShare');
+      }
+    } catch {
       Swal.fire({
         icon: 'info',
         title: 'Compartilhar indisponível',
