@@ -25,7 +25,7 @@ import { useRef } from 'react';
 import html2canvas from 'html2canvas';
 import Tooltip from '@mui/material/Tooltip';
 import Swal from 'sweetalert2';
-
+import { Helmet } from 'react-helmet';
 
 
 
@@ -461,7 +461,7 @@ export default function CardapioPage() {
     { lat: -15.7697, lon: -47.8750 },    // Porks Sobradinho
     { lat: -15.8229101, lon: -48.0444172 } // Sua casa (QNA 13)
   ];
-  const RADIUS_METERS = 5000;
+  const RADIUS_METERS = 50000;
 
   const toRad = (deg) => deg * Math.PI / 180;
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -618,6 +618,22 @@ export default function CardapioPage() {
 
   return (
     <>
+
+      <Helmet>
+        {/* Hotjar Tracking Code para esta página */}
+        <script>
+          {`
+          (function(h,o,t,j,a,r){
+            h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+            h._hjSettings={hjid:6452613,hjsv:6};
+            a=o.getElementsByTagName('head')[0];
+            r=o.createElement('script');r.async=1;
+            r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+            a.appendChild(r);
+          })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+        `}
+        </script>
+      </Helmet>
       <PixelLoader />
 
       <AppBar position="sticky" sx={{ bgcolor: '#F59E0B', color: '#fff' }}>
