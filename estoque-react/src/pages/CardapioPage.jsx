@@ -30,16 +30,17 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-
+import LocalDrinkIcon from '@mui/icons-material/LocalDrink';
+import IcecreamIcon from '@mui/icons-material/Icecream'; // ícone de sorvete para "Doces"
 
 
 // Ícones para categorias específicas
 const sectionIcons = {
   Burgers: <FastfoodIcon />,
   Torresmos: <LocalDiningIcon />,
-  Doces: <CakeIcon />,
+  Doces: <IcecreamIcon />,
   Gin: <LocalBarIcon />,
-  '0 Alcool': <EmojiFoodBeverageIcon />,
+  '0 Alcool': <LocalDrinkIcon />,
 };
 
 // Títulos de navegação
