@@ -23,7 +23,6 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
-import Tooltip from '@mui/material/Tooltip';
 import Swal from 'sweetalert2';
 import { Helmet } from 'react-helmet';
 import Dialog from '@mui/material/Dialog';
@@ -466,8 +465,6 @@ export default function CardapioPage() {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const openModal = (item) => {
-    
-
     // Meta Pixel
     if (window.fbq) {
       window.fbq('trackCustom', 'Viu ' + item.name);
@@ -610,6 +607,16 @@ export default function CardapioPage() {
     }
   };
 
+  useEffect(() => {
+    const hjScript = document.createElement('script');
+    hjScript.async = true;
+    hjScript.src = 'https://static.hotjar.com/c/hotjar-6452613.js?sv=6';
+    document.head.appendChild(hjScript);
+    return () => {
+      document.head.removeChild(hjScript);
+    };
+  }, []);
+
   // Pixel & GA
   useEffect(() => {
     if (window.fbq) window.fbq('trackCustom', 'Abriu Cardapio');
@@ -651,22 +658,6 @@ export default function CardapioPage() {
 
   return (
     <>
-
-      <Helmet>
-        {/* Hotjar Tracking Code para esta página */}
-        <script>
-          {`
-          (function(h,o,t,j,a,r){
-            h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-            h._hjSettings={hjid:6452613,hjsv:6};
-            a=o.getElementsByTagName('head')[0];
-            r=o.createElement('script');r.async=1;
-            r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-            a.appendChild(r);
-          })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
-        `}
-        </script>
-      </Helmet>
       <PixelLoader />
 
       <AppBar position="sticky" sx={{ bgcolor: '#F59E0B', color: '#fff' }}>
