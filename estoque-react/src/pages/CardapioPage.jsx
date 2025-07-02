@@ -26,6 +26,10 @@ import html2canvas from 'html2canvas';
 import Tooltip from '@mui/material/Tooltip';
 import Swal from 'sweetalert2';
 import { Helmet } from 'react-helmet';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 
 
@@ -456,6 +460,33 @@ const menuSections = [
 
 export default function CardapioPage() {
 
+  // **Modal state**
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setIsOpen(true);
+
+    // Meta Pixel
+    if (window.fbq) {
+      window.fbq('trackCustom', `Viu ${item.name}`);
+    }
+
+    // GA4
+    if (typeof gtag === 'function') {
+      gtag('event', 'view_item', {
+        event_category: 'Cardápio',
+        event_label: item.name,
+        // opcionalmente, você pode passar item_id, value, etc.
+        item_name: item.name,
+      });
+    }
+  };
+  const closeModal = () => {
+    setIsOpen(false);
+    setSelectedItem(null);
+  };
   // --- INÍCIO: Geofence de 1km para 2 locais ---
   const ALLOWED_COORDS = [
     { lat: -15.7697, lon: -47.8750 },    // Porks Sobradinho
@@ -687,7 +718,9 @@ export default function CardapioPage() {
                         overflow: 'hidden',
                         boxShadow: 3,
                         bgcolor: '#fff',
+                        cursor: 'pointer',
                       }}
+                      onClick={() => openModal(item)}
                     >
                       {/* imagem */}
                       <Box
@@ -872,6 +905,83 @@ export default function CardapioPage() {
           />
         ))}
       </BottomNavigation>
+      {/* ===== Modal de detalhes ===== */}
+      <Dialog open={isOpen} onClose={closeModal} maxWidth="sm" fullWidth>
+        {/* Título */}
+        <DialogTitle sx={{
+          fontFamily: 'Alfa Slab One',
+          fontWeight: 400,
+          fontSize: '1.4rem',
+          textAlign: 'center',
+          bgcolor: '#F59E0B',
+          color: '#fff',
+          py: 1
+        }}>
+          {selectedItem?.name}
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 0 }}>
+          {/* imagem quadrada */}
+          <Box sx={{ position: 'relative', width: '100%', pt: '100%' }}>
+            <Box
+              component="img"
+              src={selectedItem?.image}
+              alt={selectedItem?.name}
+              crossOrigin="anonymous"
+              sx={{
+                position: 'absolute',
+                top: 0, left: 0,
+                width: '100%', height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center'
+              }}
+            />
+          </Box>
+
+          {/* descrição e preço */}
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 400,
+                mb: 2
+              }}
+            >
+              {selectedItem?.description}
+            </Typography>
+
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: 'Alfa Slab One',
+                fontWeight: 400,
+                fontSize: '1.4rem',
+                color: '#F59E0B'
+              }}
+            >
+              R$ {selectedItem?.price}
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <Button
+            onClick={closeModal}
+            sx={{
+              fontFamily: 'Alfa Slab One',
+              fontWeight: 400,
+              bgcolor: '#F59E0B',
+              color: '#fff',
+              px: 3,
+              py: 1,
+              borderRadius: '24px',
+              '&:hover': { bgcolor: '#d17f07' }
+            }}
+          >
+            Fechar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
