@@ -607,13 +607,24 @@ export default function CardapioPage() {
     }
   };
 
+  // no topo do seu componente, junto com os outros useEffect:
   useEffect(() => {
-    const hjScript = document.createElement('script');
-    hjScript.async = true;
-    hjScript.src = 'https://static.hotjar.com/c/hotjar-6452613.js?sv=6';
-    document.head.appendChild(hjScript);
+    (function (h, o, t, j, a, r) {
+      h.hj = h.hj || function () { (h.hj.q = h.hj.q || []).push(arguments) };
+      h._hjSettings = { hjid: 6452613, hjsv: 6 };
+      a = o.getElementsByTagName('head')[0];
+      r = o.createElement('script'); r.async = 1;
+      r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
+      a.appendChild(r);
+    })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+
+    // não há <script> extra no JSX — só esse self-invoking
     return () => {
-      document.head.removeChild(hjScript);
+      // opcional: remover qualquer <script> do Hotjar que tenha sido adicionado
+      const scripts = Array.from(document.querySelectorAll('script')).filter(s =>
+        s.src.includes('static.hotjar.com/c/hotjar-6452613')
+      );
+      scripts.forEach(s => s.parentNode.removeChild(s));
     };
   }, []);
 
