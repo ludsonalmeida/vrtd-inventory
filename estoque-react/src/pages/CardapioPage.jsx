@@ -711,18 +711,33 @@ export default function CardapioPage() {
           >
             <CloseIcon fontSize="small" />
           </IconButton>
+
+          {/* Container que limita altura e largura do flyer */}
           <Box
-            component="img"
-            src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg"
-            alt="Flyer Motoclube"
             sx={{
-              width: 'auto',           // respeita a largura natural
-              height: 'auto',          // respeita a altura natural
-              maxWidth: '99vw',        // limita a viewport
+              width: '100%',
+              maxWidth: '95vw',
               maxHeight: '95vh',
-              display: 'block',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden',
             }}
-          />
+          >
+            <Box
+              component="img"
+              src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg"
+              alt="Flyer Motoclube"
+              sx={{
+                width: 'auto',
+                height: '100%',
+                maxWidth: '100%',
+                objectFit: 'contain',    // garante que a imagem seja inteira
+                objectPosition: 'center',
+                display: 'block',
+              }}
+            />
+          </Box>
         </Box>
       </Dialog>
 
