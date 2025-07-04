@@ -31,6 +31,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import LocalDrinkIcon from '@mui/icons-material/LocalDrink';
 import IcecreamIcon from '@mui/icons-material/Icecream'; // ícone de sorvete para "Doces"
+import CloseIcon from '@mui/icons-material/Close';
 
 
 // Ícones para categorias específicas
@@ -459,6 +460,8 @@ const menuSections = [
 ];
 
 export default function CardapioPage() {
+  // **Modal de flyer no load**
+  const [flyerOpen, setFlyerOpen] = useState(true);
 
   // **Modal state**
   const [isOpen, setIsOpen] = useState(false);
@@ -505,6 +508,11 @@ export default function CardapioPage() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
+
+  useEffect(() => {
+    // abre automaticamente ao montar
+    setFlyerOpen(true);
+  }, []);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -669,6 +677,39 @@ export default function CardapioPage() {
 
   return (
     <>
+      {/* ===== Modal de Flyer de Motoclube ===== */}
+      <Dialog open={flyerOpen} onClose={() => setFlyerOpen(false)} maxWidth="sm" fullWidth>
+        <Box sx={{ position: 'relative' }}>
+          <IconButton
+            onClick={() => setFlyerOpen(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: '#fff',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+              p: 1.5,
+              boxShadow: 2,
+              borderRadius: '50%',
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+          <Box
+            component="img"
+            src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg"
+            alt="Flyer Motoclube"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
+        </Box>
+      </Dialog>
+
       <PixelLoader />
 
       <AppBar position="sticky" sx={{ bgcolor: '#F59E0B', color: '#fff' }}>
