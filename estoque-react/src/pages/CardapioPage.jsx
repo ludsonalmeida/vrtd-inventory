@@ -719,7 +719,7 @@ export default function CardapioPage() {
               width: 'auto',           // respeita a largura natural
               height: 'auto',          // respeita a altura natural
               maxWidth: '99vw',        // limita a viewport
-              maxHeight: '99vh',
+              maxHeight: '95vh',
               display: 'block',
             }}
           />
