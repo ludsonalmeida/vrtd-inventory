@@ -678,8 +678,22 @@ export default function CardapioPage() {
   return (
     <>
       {/* ===== Modal de Flyer de Motoclube ===== */}
-      <Dialog open={flyerOpen} onClose={() => setFlyerOpen(false)} maxWidth="sm" fullWidth>
-        <Box sx={{ position: 'relative' }}>
+      <Dialog
+        open={flyerOpen}
+        onClose={() => setFlyerOpen(false)}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: 'auto',           // largura conforme conteúdo
+            maxWidth: '95vw',        // não ultrapassar 95% da viewport
+            maxHeight: '95vh',       // não ultrapassar 95% da viewport
+            p: 0,                    // sem padding extra
+            overflow: 'hidden',      // sem scroll interno
+            borderRadius: 2,
+          }
+        }}
+      >
+        <Box sx={{ position: 'relative', display: 'inline-block' }}>
           <IconButton
             onClick={() => setFlyerOpen(false)}
             sx={{
@@ -702,8 +716,10 @@ export default function CardapioPage() {
             src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg"
             alt="Flyer Motoclube"
             sx={{
-              width: '100%',
-              height: 'auto',
+              width: 'auto',           // respeita a largura natural
+              height: 'auto',          // respeita a altura natural
+              maxWidth: '95vw',        // limita a viewport
+              maxHeight: '95vh',
               display: 'block',
             }}
           />
