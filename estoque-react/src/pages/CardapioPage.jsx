@@ -724,10 +724,12 @@ export default function CardapioPage() {
               overflow: 'hidden',
             }}
           >
+             {/* src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg" */}
+            
             <Box
               component="img"
-              src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg"
-              alt="Flyer Motoclube"
+              src=" https://porks.nyc3.cdn.digitaloceanspaces.com/eventos/londonpub.jpeg"
+              alt="London Pub"        
               sx={{
                 width: '100%',        // ocupa toda a largura disponível
                 height: 'auto',       // ajusta a altura proporcionalmente
