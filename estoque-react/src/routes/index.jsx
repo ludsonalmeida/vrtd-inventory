@@ -42,7 +42,7 @@ export default function AppRoutes() {
         {/* Página de Cardápio pública, sem layout extra */}
         <Route path="/cardapio" element={<CardapioPage />} />
          {/* Nova rota de redirecionamento para o grupo WhatsApp */}
-        <Route path="/redirect-wpp" component={RedirectPage} />
+        <Route path="/redirect-wpp" element={<RedirectPage />} />
         {/* Login e registro permanecem com Footer */}
         <Route path="/login" element={<><LoginPage /><Footer /></>} />
         <Route path="/register" element={<><RegisterPage /><Footer /></>} />
