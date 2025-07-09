@@ -460,6 +460,23 @@ const menuSections = [
 ];
 
 export default function CardapioPage() {
+
+  const [openLondonMenu, setOpenLondonMenu] = useState(false);
+
+  const handleLondonClick = () => {
+    // Meta Pixel
+    if (window.fbq) window.fbq('trackCustom', 'abriu london rocks');
+    // GA4
+    if (typeof gtag === 'function') {
+      gtag('event', 'abriu_london_rocks', {
+        event_category: 'Cardapio',
+        event_label: 'London Rocks'
+      });
+    }
+    setOpenLondonMenu(true);
+  };
+
+
   // **Modal de flyer no load**
   const [flyerOpen, setFlyerOpen] = useState(true);
 
@@ -677,6 +694,7 @@ export default function CardapioPage() {
 
   return (
     <>
+
       {/* ===== Modal de Flyer de Motoclube ===== */}
       <Dialog
         open={flyerOpen}
@@ -724,12 +742,12 @@ export default function CardapioPage() {
               overflow: 'hidden',
             }}
           >
-             {/* src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg" */}
-            
+            {/* src="https://porks.nyc3.cdn.digitaloceanspaces.com/flyer-motoclube.jpeg" */}
+
             <Box
               component="img"
               src=" https://porks.nyc3.cdn.digitaloceanspaces.com/eventos/londonpub.jpeg"
-              alt="London Pub"        
+              alt="London Pub"
               sx={{
                 width: '100%',        // ocupa toda a largura disponível
                 height: 'auto',       // ajusta a altura proporcionalmente
@@ -755,6 +773,41 @@ export default function CardapioPage() {
         </Toolbar>
       </AppBar>
 
+      {/* ==== Botão London Rocks ==== */}
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={handleLondonClick}
+          sx={{
+            width: '80%',
+            maxWidth: '400px',
+            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            backgroundBlendMode: 'darken',
+            color: '#fff',
+            fontFamily: 'Alfa Slab One',
+            fontWeight: 400,
+            fontSize: '1.2rem',
+            animation: 'pulseGlow 2s infinite ease-in-out',
+            '@keyframes pulseGlow': {
+              '0%': { boxShadow: '0 0 8px 2px rgba(255,0,0,0.5)' },
+              '50%': { boxShadow: '0 0 20px 6px rgba(255,0,0,0.8)' },
+              '100%': { boxShadow: '0 0 8px 2px rgba(255,0,0,0.5)' },
+            },
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              animation: 'none'
+            },
+            textTransform: 'none',
+            '&:hover': { backgroundColor: 'rgba(0,0,0,0.8)' }
+          }}
+        >
+          Cardápio London Rocks
+        </Button>
+      </Box>
       <Box
         component="main"
         sx={{
@@ -1064,6 +1117,50 @@ export default function CardapioPage() {
           >
             Fechar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ==== Modal London Rocks ==== */}
+      <Dialog
+        open={openLondonMenu}
+        onClose={() => setOpenLondonMenu(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { p: 0, overflow: 'hidden' } }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: 'Alfa Slab One',
+            fontWeight: 400,
+            textAlign: 'center',
+            bgcolor: '#F59E0B',
+            color: '#fff'
+          }}
+        >
+          Cardápio London Rocks
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <Box
+            component="embed"
+            src="https://porks.nyc3.cdn.digitaloceanspaces.com/london-menu.pdf"
+            type="application/pdf"
+            width="100%"
+            height="80vh"
+            sx={{ display: 'block' }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <IconButton
+            onClick={() => setOpenLondonMenu(false)}
+            sx={{
+              fontWeight: 400,
+              bgcolor: '#F59E0B',
+              color: '#fff',
+              '&:hover': { bgcolor: '#d17f07' }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogActions>
       </Dialog>
     </>
