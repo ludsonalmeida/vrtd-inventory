@@ -32,7 +32,7 @@ export default function RedirectPage() {
     // Redireciona após 5s
     const timeoutId = setTimeout(() => {
       window.location.href = WHATSAPP_GROUP;
-    }, 5000);
+    }, 3000);
 
     return () => {
       clearInterval(intervalId);
