@@ -23,6 +23,7 @@ import CMVDashboard from '../pages/CMVDashboard';
 import StockMovements from '../pages/StockMovements';
 import CardapioPage from '../pages/CardapioPage';
 import RedirectPage from '../pages/RedirectPage';
+import PixelLoader from '../components/PixelLoader';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -36,6 +37,8 @@ export default function AppRoutes() {
 
   return (
     <Router>
+      {/* PixelLoader is mounted once and visible on every route */}
+      <PixelLoader />
       <Routes>
         {/* Página inicial pública */}
         <Route path="/" element={<><HomePage /><Footer /></>} />
