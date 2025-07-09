@@ -511,7 +511,7 @@ export default function CardapioPage() {
     { lat: -15.7697, lon: -47.8750 },    // Porks Sobradinho
     { lat: -15.8229101, lon: -48.0444172 } // Sua casa (QNA 13)
   ];
-  const RADIUS_METERS = 50000;
+  const RADIUS_METERS = 1000;
 
   const toRad = (deg) => deg * Math.PI / 180;
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
