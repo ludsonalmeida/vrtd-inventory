@@ -24,6 +24,7 @@ import StockMovements from '../pages/StockMovements';
 import CardapioPage from '../pages/CardapioPage';
 import RedirectPage from '../pages/RedirectPage';
 import PixelLoader from '../components/PixelLoader';
+import ChopesPage   from '../pages/ChopesPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -44,6 +45,8 @@ export default function AppRoutes() {
         <Route path="/" element={<><HomePage /><Footer /></>} />
         {/* Página de Cardápio pública, sem layout extra */}
         <Route path="/cardapio" element={<CardapioPage />} />
+         {/* Página de Chopes pública */}
++        <Route path="/chopes" element={<ChopesPage />} />
          {/* Nova rota de redirecionamento para o grupo WhatsApp */}
         <Route path="/redirect-wpp" element={<RedirectPage />} />
         {/* Login e registro permanecem com Footer */}
