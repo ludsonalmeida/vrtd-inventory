@@ -468,6 +468,7 @@ export default function CardapioPage() {
   // **Modal state**
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [mexModalOpen, setMexModalOpen] = useState(false);
 
   const openModal = (item) => {
     // Meta Pixel
@@ -680,27 +681,56 @@ export default function CardapioPage() {
   return (
     <>
 
-    <PixelLoader />
-
+      <PixelLoader />
       <AppBar position="sticky" sx={{ bgcolor: '#F59E0B', color: '#fff' }}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <IconButton edge="start" color="inherit" onClick={() => window.history.back()}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Box component="img" src={logoUrl} alt="Logo Porks" sx={{ height: 40 }} />
-          <Box sx={{ width: 48 }} />
+        <Toolbar sx={{ flexDirection: 'column', gap: 1, py: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+            <IconButton edge="start" color="inherit" onClick={() => window.history.back()}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box component="img" src={logoUrl} alt="Logo Porks" sx={{ height: 40 }} />
+            <Box sx={{ width: 48 }} />
+          </Box>
+
+
         </Toolbar>
       </AppBar>
 
-      
+
       <Box
         component="main"
         sx={{
           paddingTop: '18px',
+          justifyContent: 'center',
           paddingBottom: 10,
           backgroundColor: '#f5f5f5',
         }}
       >
+
+        {/* Botão Festival Mexicano */}
+        <Button
+          onClick={() => setMexModalOpen(true)}
+          sx={{
+            display: 'block',
+            margin: '0 auto',
+            fontWeight: '400',
+            fontFamily: 'Alfa Slab One',
+            background: 'linear-gradient(90deg, #008000, #ffffff, #ff0000)',
+            color: '#000',
+            border: '2px solid #fff',
+            borderRadius: '12px',
+            textAlign: 'center',
+            px: 3,
+            py: 1,
+            boxShadow: 3,
+            '&:hover': {
+              background: 'linear-gradient(90deg, #006400, #e0e0e0, #cc0000)',
+            },
+          }}
+        >
+          Festival Mexicano
+        </Button>
+        <br />
         {menuSections.map((section) => (
           <Box
             id={section.title.replace(/\s+/g, '')}
@@ -1003,6 +1033,33 @@ export default function CardapioPage() {
             Fechar
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={mexModalOpen} onClose={() => setMexModalOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle
+          sx={{
+            fontFamily: 'Alfa Slab One',
+            fontWeight: 400,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            bgcolor: '#008000',
+            color: '#fff',
+          }}
+        >
+          Festival Mexicano 🇲🇽
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <Box
+            component="img"
+            src="https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/mexico-menu.jpg" // certifique-se que a imagem esteja na pasta public/
+            alt="Cardápio Mexicano"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              objectFit: 'cover',
+            }}
+          />
+        </DialogContent>
       </Dialog>
 
     </>
