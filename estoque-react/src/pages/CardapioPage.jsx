@@ -517,40 +517,6 @@ export default function CardapioPage() {
     setFlyerOpen(true);
   }, []);
 
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const { latitude, longitude } = coords;
-        const dentro = ALLOWED_COORDS.some(({ lat, lon }) =>
-          calculateDistance(latitude, longitude, lat, lon) <= RADIUS_METERS
-        );
-        if (!dentro) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Fora de área',
-            text: 'Desculpe, você está fora da área de atendimento Porks.',
-          }).then(() => {
-            setTimeout(() => {
-              window.location.href = 'https://sobradinhoporks.com.br';
-            }, 5000);
-          });
-        }
-      },
-      () => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Não foi possível determinar sua localização',
-          text: 'Ative o GPS para acessar o cardápio.',
-        }).then(() => {
-          setTimeout(() => {
-            window.location.href = 'https://sobradinhoporks.com.br';
-          }, 5000);
-        });
-      }
-    );
-  }, []);
-  // --- FIM: Geofence ---
-
   const itemRefs = useRef({});
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
