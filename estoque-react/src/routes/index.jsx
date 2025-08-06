@@ -22,9 +22,11 @@ import ReservationsPage from '../pages/ReservationsPage';
 import CMVDashboard from '../pages/CMVDashboard';
 import StockMovements from '../pages/StockMovements';
 import CardapioPage from '../pages/CardapioPage';
+import SignUpCard from '../pages/signUpCard.jsx';
 import RedirectPage from '../pages/RedirectPage';
 import PixelLoader from '../components/PixelLoader';
-import ChopesPage   from '../pages/ChopesPage';
+import ChopesPage from '../pages/ChopesPage';
+import LGPD from '../pages/lgpd.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -45,9 +47,12 @@ export default function AppRoutes() {
         <Route path="/" element={<><HomePage /><Footer /></>} />
         {/* Página de Cardápio pública, sem layout extra */}
         <Route path="/cardapio" element={<CardapioPage />} />
-         {/* Página de Chopes pública */}
-+        <Route path="/chopes" element={<ChopesPage />} />
-         {/* Nova rota de redirecionamento para o grupo WhatsApp */}
+        <Route path="/clubedochope" element={<SignUpCard />} />
+        <Route path="/politicas-de-privacidade" element={<LGPD />} />
+        
+        {/* Página de Chopes pública */}
+        <Route path="/chopes" element={<ChopesPage />} />
+        {/* Nova rota de redirecionamento para o grupo WhatsApp */}
         <Route path="/redirect-wpp" element={<RedirectPage />} />
         {/* Login e registro permanecem com Footer */}
         <Route path="/login" element={<><LoginPage /><Footer /></>} />
