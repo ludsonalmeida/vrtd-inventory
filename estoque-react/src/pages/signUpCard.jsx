@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -10,156 +10,116 @@ import {
   DialogContent,
   DialogActions
 } from '@mui/material';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-export default function ClubeChopeLanding() {
-  // Carregar SDK do Facebook
-  useEffect(() => {
-    if (!document.getElementById('fb-root')) {
-      const fbRoot = document.createElement('div');
-      fbRoot.id = 'fb-root';
-      document.body.prepend(fbRoot);
-    }
-    if (!document.getElementById('facebook-jssdk')) {
-      const script = document.createElement('script');
-      script.id = 'facebook-jssdk';
-      script.src = 'https://connect.facebook.net/pt_BR/sdk.js';
-      script.async = true;
-      script.onload = () => {
-        if (window.FB) {
-          window.FB.init({
-            appId: '1137904761202799', // substitua pelo seu App ID
-            autoLogAppEvents: true,
-            xfbml: false,                // se não usar plugins XFBML
-            version: 'v12.0',
-            cookie: true,
-          });
-        }
-      };
-      document.body.appendChild(script);
-    }
-  }, []);
-
-  // Form fields
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+export default function SignupCard() {
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [cpf, setCpf] = useState('');
-
-  // Lookup modal state
-  const [lookupOpen, setLookupOpen] = useState(false);
-  const [lookupEmail, setLookupEmail] = useState('');
-
-  // Confirmation modal
+  const [step, setStep] = useState('email'); // 'email' | 'confirm' | 'form'
+  const [userData, setUserData] = useState(null);
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', cpf: '', email: '' });
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // Facebook login handler
-  const handleFacebook = () => {
-    if (!window.FB) {
-      return alert('SDK do Facebook não carregado.');
-    }
-
-    window.FB.login(response => {
-      if (response.authResponse) {
-        window.FB.api(
-          '/me',
-          { fields: 'first_name,last_name,email' },
-          user => {
-            if (!user || user.error) {
-              return alert('Não foi possível obter seus dados do Facebook.');
-            }
-            setFirstName(user.first_name || '');
-            setLastName(user.last_name || '');
-            setEmail(user.email || '');
-            setLookupOpen(false);
-          }
-        );
-      } else {
-        // o usuário cancelou ou não deu permissão
-        console.log('Login não autorizado:', response);
-      }
-    }, { scope: 'public_profile,email' });
-  };
-
-  // Lookup by email (no password)
-  const handleLookup = async () => {
+  const handleNext = async () => {
     try {
-      const res = await fetch(`/api/users?email=${encodeURIComponent(lookupEmail)}`);
-      if (!res.ok) throw new Error('Falha ao buscar dados');
-      const user = await res.json();
-      setFirstName(user.firstName || '');
-      setLastName(user.lastName || '');
-      setEmail(user.email || '');
-      setPhone(user.phone || '');
-      setCpf(user.cpf || '');
-      setLookupOpen(false);
+      const res = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const user = await res.json();
+        // split full name
+        const [firstName, ...rest] = user.name.split(' ');
+        const lastName = rest.join(' ');
+        setUserData({ firstName, lastName, email: user.email });
+        setStep('confirm');
+      } else if (res.status === 404) {
+        setFormData(prev => ({ ...prev, email }));
+        setStep('form');
+      } else {
+        throw new Error('Erro na busca de usuário');
+      }
     } catch (err) {
-      alert('Erro ao buscar dados: ' + err.message);
+      alert(err.message);
     }
   };
 
-  // Submit form
-  const handleSubmit = () => {
-    // chamada para cadastro no backend
-    // ex: fetch('/api/cartao', { method: 'POST', body: JSON.stringify({ firstName, lastName, email, phone, cpf }) })
+  const handleConfirmUser = async () => {
+    // cadastra cartão para usuário existente
+    await fetch('/api/cartao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    setConfirmOpen(true);
+  };
+
+  const handleChange = field => e => {
+    setFormData({ ...formData, [field]: e.target.value });
+  };
+
+  const handleSubmitForm = async () => {
+    // cadastra cartão para novo usuário + formData
+    await fetch('/api/cartao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
     setConfirmOpen(true);
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#fafafa', p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Paper sx={{ maxWidth: 400, width: '100%', p: 3 }} elevation={3}>
-        <Typography variant="h5" gutterBottom align="center">
-          Clube do Chope - Cadastro
-        </Typography>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Social / Lookup buttons */}
-          <Button startIcon={<FacebookIcon />} variant="contained" color="primary" onClick={handleFacebook}>
-            Cadastrar com Facebook
-          </Button>
-          <Button startIcon={<AccountCircleIcon />} variant="outlined" onClick={() => setLookupOpen(true)}>
-            Preencher com Email
-          </Button>
-
-          {/* Form fields */}
-          <TextField label="Nome" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth />
-          <TextField label="Sobrenome" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth />
-          <TextField label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth />
-          <TextField label="Telefone" value={phone} onChange={e => setPhone(e.target.value)} fullWidth />
-          <TextField label="CPF" value={cpf} onChange={e => setCpf(e.target.value)} fullWidth />
-
-          <Button variant="contained" color="secondary" fullWidth onClick={handleSubmit}>
-            Confirmar Cadastro
-          </Button>
-        </Box>
-      </Paper>
-
-      {/* Email Lookup Modal */}
-      <Dialog open={lookupOpen} onClose={() => setLookupOpen(false)}>
-        <DialogTitle>Preencher com Email</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa', p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {step === 'email' && (
+        <Paper sx={{ p: 3, width: 360 }} elevation={3}>
+          <Typography variant="h6" gutterBottom>Informe seu e-mail</Typography>
           <TextField
             label="Email"
             type="email"
-            value={lookupEmail}
-            onChange={e => setLookupEmail(e.target.value)}
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             fullWidth
+            sx={{ mb: 2 }}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLookupOpen(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleLookup}>Buscar Dados</Button>
-        </DialogActions>
-      </Dialog>
+          <Button variant="contained" fullWidth onClick={handleNext} disabled={!email}>
+            Próximo
+          </Button>
+        </Paper>
+      )}
 
-      {/* Confirmation Modal */}
+      {step === 'confirm' && (
+        <Dialog open onClose={() => setStep('email')}>
+          <DialogTitle>Confirme seus dados</DialogTitle>
+          <DialogContent dividers>
+            <Typography>Nome: {userData.firstName} {userData.lastName}</Typography>
+            <Typography>Email: {userData.email}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setStep('email')}>Voltar</Button>
+            <Button variant="contained" onClick={handleConfirmUser}>Confirmar Dados</Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {step === 'form' && (
+        <Paper sx={{ p: 3, width: 360 }} elevation={3}>
+          <Typography variant="h6" gutterBottom>Cadastre seus dados</Typography>
+          <TextField label="Nome" value={formData.firstName} onChange={handleChange('firstName')} fullWidth sx={{ mb: 1 }} />
+          <TextField label="Sobrenome" value={formData.lastName} onChange={handleChange('lastName')} fullWidth sx={{ mb: 1 }} />
+          <TextField label="Email" type="email" value={formData.email} disabled fullWidth sx={{ mb: 1 }} />
+          <TextField label="Telefone" value={formData.phone} onChange={handleChange('phone')} fullWidth sx={{ mb: 1 }} />
+          <TextField label="CPF" value={formData.cpf} onChange={handleChange('cpf')} fullWidth sx={{ mb: 2 }} />
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSubmitForm}
+            disabled={!formData.firstName || !formData.lastName || !formData.phone || !formData.cpf}
+          >
+            Confirmar Cadastro
+          </Button>
+        </Paper>
+      )}
+
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>Cadastro Realizado!</DialogTitle>
         <DialogContent>
           <Typography>
-            Para retirar seu cartão no balcão será cobrada uma taxa de R$ 5,00 na primeira carga. Você ganhará 10% de cashback sobre o valor carregado na primeira carga.
+            Para retirar seu cartão no balcão será cobrada uma taxa de R$ 5,00 na primeira carga. Você ganhará 10% de cashback sobre o valor carregado na primeira carga.
           </Typography>
         </DialogContent>
         <DialogActions>
