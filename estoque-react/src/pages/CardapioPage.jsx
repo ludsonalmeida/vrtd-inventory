@@ -673,29 +673,7 @@ export default function CardapioPage() {
         }}
       >
 
-        {/* Botão Festival Mexicano */}
-        <Button
-          onClick={() => setMexModalOpen(true)}
-          sx={{
-            display: 'block',
-            margin: '0 auto',
-            fontWeight: '400',
-            fontFamily: 'Alfa Slab One',
-            background: 'linear-gradient(90deg, #008000, #ffffff, #ff0000)',
-            color: '#000',
-            border: '2px solid #fff',
-            borderRadius: '12px',
-            textAlign: 'center',
-            px: 3,
-            py: 1,
-            boxShadow: 3,
-            '&:hover': {
-              background: 'linear-gradient(90deg, #006400, #e0e0e0, #cc0000)',
-            },
-          }}
-        >
-          Festival Mexicano
-        </Button>
+       
         <br />
         {menuSections.map((section) => (
           <Box
@@ -1001,32 +979,7 @@ export default function CardapioPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={mexModalOpen} onClose={() => setMexModalOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle
-          sx={{
-            fontFamily: 'Alfa Slab One',
-            fontWeight: 400,
-            fontSize: '1.5rem',
-            textAlign: 'center',
-            bgcolor: '#008000',
-            color: '#fff',
-          }}
-        >
-          Festival Mexicano 🇲🇽
-        </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          <Box
-            component="img"
-            src="https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/mexico-menu.jpg" // certifique-se que a imagem esteja na pasta public/
-            alt="Cardápio Mexicano"
-            sx={{
-              width: '100%',
-              height: 'auto',
-              objectFit: 'cover',
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+  
 
     </>
   );
