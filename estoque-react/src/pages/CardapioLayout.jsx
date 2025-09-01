@@ -621,8 +621,8 @@ function CardapioInner() {
     setTimeout(() => openDetail(it), 0);
   };
 
-  // Sem content-visibility/containIntrinsicSize nas páginas internas
-  const rowPerfSX = {}; // removido para evitar "jelly scroll"
+  // Mantém a mesma estrutura de linha em todas as páginas
+  const rowPerfSX = {};
   const actionColSX = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -638,245 +638,139 @@ function CardapioInner() {
         '.search-ov input::-moz-focus-inner': { border: 0 },
       }} />
 
-      {/* Banner */}
-      <Box sx={{ mx: 2, mt: 2, borderRadius: 2.5, overflow: 'hidden', position: 'relative', height: { xs: 220, sm: 260 }, bgcolor: palette.bannerRed }}>
-        <Box sx={{ position: 'absolute', inset: 0, display: 'flex', height: '100%', transition: 'transform .5s ease', transform: `translateX(-${slide * 100}%)` }}>
-          {slides.map((s, i) => (
-            <Box key={i} sx={{
-              minWidth: '100%', height: '100%', position: 'relative',
-              backgroundImage: `linear-gradient(90deg, ${palette.bannerRed} 0%, ${palette.bannerRed} 64%, rgba(230,86,79,0) 64%), url('${s.image}')`,
-              backgroundSize: 'cover, contain', backgroundRepeat: 'no-repeat, no-repeat',
-              backgroundPosition: 'left center, right -8px center',
-            }}>
-              <Box sx={{ px: 3, py: { xs: 3.2, sm: 3.5 }, width: '64%' }}>
-                <Typography sx={{ color: '#fff', fontSize: 'clamp(22px, 6vw, 30px)', lineHeight: 1.02, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                  {s.title1}<Box component="span" sx={{ display: 'block' }}>{s.title2}</Box>
-                </Typography>
-                <Typography sx={{ color: '#FFEFEA', mt: 1.2, fontSize: { xs: 13.5, sm: 14.5 }, fontWeight: 500 }}>{s.desc}</Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-        <Box sx={{ position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', display: 'flex', gap: 1.25 }}>
-          {slides.map((_, i) => (<Box key={i} onClick={() => setSlide(i)} sx={{ width: 8, height: 8, borderRadius: '50%', cursor: 'pointer', bgcolor: i === slide ? '#fff' : 'rgba(255,255,255,.5)', outline: '2px solid rgba(255,255,255,.25)' }} />))}
-        </Box>
-      </Box>
-
-      {/* Seções padrão (início) */}
+      {/* Banner (só na home) */}
       {nav === 'inicio' && (
-        <Box sx={{ mx: 2, mt: 2, mb: '70px' }}>
-          {showSugSkel ? (
-            <SectionSkeleton rows={3} />
-          ) : (
-            <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Sugestões do dia
-              </Typography>
-              <Grid container direction="column">
-                {items.map((item, idx) => {
-                  const burstKey = burstMap[item.id] || 0;
-                  return (
-                    <Box key={item.id}>
-                      <Box
-                        onClick={() => openDetail(item)}
-                        sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer', ...rowPerfSX }}
-                      >
-                        <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                          <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        </Box>
-                        <Box sx={{ minWidth: 0, mr: 1 }}>
-                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
-                            {item.title}
-                          </Typography>
-                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
-                          {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
-                          <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                            R$ {item.price}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={actionColSX}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {idx === 0
-                            ? <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} withTooltip tooltipOpen={tipOpen} tooltipRef={firstHeartRef} burstKey={burstKey} />
-                            : <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />}
-                          <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                            <Typography
-                              sx={{
-                                position: 'absolute',
-                                top: 'calc(100% + 2px)',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                fontSize: 11,
-                                fontWeight: 800,
-                                color: palette.heart,
-                                whiteSpace: 'nowrap',
-                                pointerEvents: 'none',
-                              }}
-                            >
-                              Gostei
-                            </Typography>
-                          </Fade>
-                        </Box>
-                      </Box>
-                      {idx < items.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
-                    </Box>
-                  );
-                })}
-              </Grid>
-            </Paper>
-          )}
-
-          {showPromoSkel ? (
-            <Box sx={{ mt: 2 }}><SectionSkeleton rows={3} /></Box>
-          ) : (
-            <Paper elevation={0} sx={{ mt: 2, p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Promoções do dia
-              </Typography>
-              <Grid container direction="column">
-                {promos.map((item, idx) => {
-                  const burstKey = burstMap[item.id] || 0;
-                  return (
-                    <Box key={item.id}>
-                      <Box
-                        onClick={() => openDetail(item)}
-                        sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer', ...rowPerfSX }}
-                      >
-                        <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                          <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        </Box>
-                        <Box sx={{ minWidth: 0, mr: 1 }}>
-                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
-                            {item.title}
-                          </Typography>
-                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
-                          {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
-                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: .6, flexWrap: 'wrap' }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                              R$ {item.price}
-                            </Typography>
-                            <Typography sx={{ color: '#9AA0A6', textDecoration: 'line-through', fontWeight: 600, fontSize: 13 }}>
-                              R$ {item.oldPrice}
-                            </Typography>
-                            <Chip
-                              label={`-${Math.max(0, Math.round((1 - parseFloat(item.price) / parseFloat(item.oldPrice)) * 100))}%`}
-                              size="small"
-                              sx={{ bgcolor: palette.promoBg, color: palette.promoFg, fontWeight: 700, height: 22, borderRadius: '12px', fontSize: 12 }}
-                            />
-                          </Box>
-                        </Box>
-                        <Box
-                          sx={actionColSX}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
-                          <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                            <Typography
-                              sx={{
-                                position: 'absolute',
-                                top: 'calc(100% + 2px)',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                fontSize: 11,
-                                fontWeight: 800,
-                                color: palette.heart,
-                                whiteSpace: 'nowrap',
-                                pointerEvents: 'none',
-                              }}
-                            >
-                              Gostei
-                            </Typography>
-                          </Fade>
-                        </Box>
-                      </Box>
-                      {idx < promos.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
-                    </Box>
-                  );
-                })}
-              </Grid>
-            </Paper>
-          )}
+        <Box sx={{ mx: 2, mt: 2, borderRadius: 2.5, overflow: 'hidden', position: 'relative', height: { xs: 220, sm: 260 }, bgcolor: palette.bannerRed }}>
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', height: '100%', transition: 'transform .5s ease', transform: `translateX(-${slide * 100}%)` }}>
+            {slides.map((s, i) => (
+              <Box key={i} sx={{
+                minWidth: '100%', height: '100%', position: 'relative',
+                backgroundImage: `linear-gradient(90deg, ${palette.bannerRed} 0%, ${palette.bannerRed} 64%, rgba(230,86,79,0) 64%), url('${s.image}')`,
+                backgroundSize: 'cover, contain', backgroundRepeat: 'no-repeat, no-repeat',
+                backgroundPosition: 'left center, right -8px center',
+              }}>
+                <Box sx={{ px: 3, py: { xs: 3.2, sm: 3.5 }, width: '64%' }}>
+                  <Typography sx={{ color: '#fff', fontSize: 'clamp(22px, 6vw, 30px)', lineHeight: 1.02, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+                    {s.title1}<Box component="span" sx={{ display: 'block' }}>{s.title2}</Box>
+                  </Typography>
+                  <Typography sx={{ color: '#FFEFEA', mt: 1.2, fontSize: { xs: 13.5, sm: 14.5 }, fontWeight: 500 }}>{s.desc}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+          <Box sx={{ position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', display: 'flex', gap: 1.25 }}>
+            {slides.map((_, i) => (<Box key={i} onClick={() => setSlide(i)} sx={{ width: 8, height: 8, borderRadius: '50%', cursor: 'pointer', bgcolor: i === slide ? '#fff' : 'rgba(255,255,255,.5)', outline: '2px solid rgba(255,255,255,.25)' }} />))}
+          </Box>
         </Box>
       )}
 
-      {/* CHOPES */}
-      {nav === 'chopes' && (
-        <Box sx={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: NAV_H, bgcolor: palette.page, zIndex: (t) => t.zIndex.appBar - 1, display: 'flex', flexDirection: 'column', animation: `${fadeIn} 120ms ease-out` }}>
-          {/* Header */}
-          <Box sx={{ position: 'sticky', top: 0, zIndex: (t) => t.zIndex.appBar, px: 1.5, pt: 'calc(env(safe-area-inset-top) + 10px)', pb: 1, bgcolor: '#fff', backdropFilter: 'saturate(180%) blur(8px)', borderBottom: '1px solid #EEE6D7' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Button
-                onClick={() => setNav('inicio')}
-                startIcon={<ArrowBackRoundedIcon />}
-                variant="contained"
-                sx={{
-                  bgcolor: palette.headerGreen,
-                  '&:hover': { bgcolor: '#0c4027' },
-                  color: '#fff',
-                  borderRadius: 999,
-                  px: 1.25,
-                  py: 0.65,
-                  minHeight: 36,
-                  textTransform: 'none',
-                  fontWeight: 800,
-                  boxShadow: '0 6px 18px rgba(15,81,50,.24)',
-                }}
-              >
-                Voltar
-              </Button>
-              <Typography sx={{ fontFamily: "'Alfa Slab One', Georgia, serif", mt: '50px', fontSize: 20, color: palette.textPrimary }}>Chopes</Typography>
-              <Box sx={{ visibility: 'hidden' }}>
-                <Button startIcon={<ArrowBackRoundedIcon />} variant="contained" sx={{ borderRadius: 999, px: 1.25, py: 0.65, minHeight: 36 }}>Voltar</Button>
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Lista de chopes */}
-          <Box sx={{ flex: 1, overflow: 'auto', px: 2, pt: '63px', pb: 2 }}>
-            <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Nossos chopes
-              </Typography>
-
-              {chopes.length === 0 ? (
-                <Typography sx={{ color: '#9AA0A6', textAlign: 'center', py: 4 }}>
-                  Nenhum chope disponível no momento.
+      {/* Conteúdo PRINCIPAL / CHOPES / FAVORITOS – todos como seções normais */}
+      <Box sx={{ mx: 2, mt: 2, mb: `calc(${NAV_H} + 6px)` }}>
+        {/* Home */}
+        {nav === 'inicio' && (
+          <>
+            {showSugSkel ? (
+              <SectionSkeleton rows={3} />
+            ) : (
+              <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
+                <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+                  Sugestões do dia
                 </Typography>
-              ) : (
                 <Grid container direction="column">
-                  {chopes.map((item, idx) => {
-                    const burstKey = (burstMap[item.id] || 0) + 2000;
+                  {items.map((item, idx) => {
+                    const burstKey = burstMap[item.id] || 0;
                     return (
-                      <Box key={`chope-${item.id}`}>
+                      <Box key={item.id}>
                         <Box
                           onClick={() => openDetail(item)}
-                          sx={{
-                            py: 1,
-                            display: 'grid',
-                            gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`,
-                            columnGap: 1.5,
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            ...rowPerfSX,
-                          }}
+                          sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer', ...rowPerfSX }}
                         >
                           <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
                             <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           </Box>
-
                           <Box sx={{ minWidth: 0, mr: 1 }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
+                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
                               {item.title}
                             </Typography>
-                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
-                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
+                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
+                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
                             <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
                               R$ {item.price}
                             </Typography>
                           </Box>
+                          <Box
+                            sx={actionColSX}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {idx === 0
+                              ? <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} withTooltip tooltipOpen={tipOpen} tooltipRef={firstHeartRef} burstKey={burstKey} />
+                              : <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />}
+                            <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
+                              <Typography
+                                sx={{
+                                  position: 'absolute',
+                                  top: 'calc(100% + 2px)',
+                                  left: '50%',
+                                  transform: 'translateX(-50%)',
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  color: palette.heart,
+                                  whiteSpace: 'nowrap',
+                                  pointerEvents: 'none',
+                                }}
+                              >
+                                Gostei
+                              </Typography>
+                            </Fade>
+                          </Box>
+                        </Box>
+                        {idx < items.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
+                      </Box>
+                    );
+                  })}
+                </Grid>
+              </Paper>
+            )}
 
+            {showPromoSkel ? (
+              <Box sx={{ mt: 2 }}><SectionSkeleton rows={3} /></Box>
+            ) : (
+              <Paper elevation={0} sx={{ mt: 2, p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
+                <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+                  Promoções do dia
+                </Typography>
+                <Grid container direction="column">
+                  {promos.map((item, idx) => {
+                    const burstKey = burstMap[item.id] || 0;
+                    return (
+                      <Box key={item.id}>
+                        <Box
+                          onClick={() => openDetail(item)}
+                          sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer', ...rowPerfSX }}
+                        >
+                          <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                            <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          </Box>
+                          <Box sx={{ minWidth: 0, mr: 1 }}>
+                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
+                              {item.title}
+                            </Typography>
+                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
+                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
+                            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: .6, flexWrap: 'wrap' }}>
+                              <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
+                                R$ {item.price}
+                              </Typography>
+                              <Typography sx={{ color: '#9AA0A6', textDecoration: 'line-through', fontWeight: 600, fontSize: 13 }}>
+                                R$ {item.oldPrice}
+                              </Typography>
+                              <Chip
+                                label={`-${Math.max(0, Math.round((1 - parseFloat(item.price) / parseFloat(item.oldPrice)) * 100))}%`}
+                                size="small"
+                                sx={{ bgcolor: palette.promoBg, color: palette.promoFg, fontWeight: 700, height: 22, borderRadius: '12px', fontSize: 12 }}
+                              />
+                            </Box>
+                          </Box>
                           <Box
                             sx={actionColSX}
                             onClick={(e) => e.stopPropagation()}
@@ -901,146 +795,183 @@ function CardapioInner() {
                             </Fade>
                           </Box>
                         </Box>
-                        {idx < chopes.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
+                        {idx < promos.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
                       </Box>
                     );
                   })}
                 </Grid>
-              )}
-            </Paper>
-          </Box>
-        </Box>
-      )}
+              </Paper>
+            )}
+          </>
+        )}
 
-      {/* Favoritos */}
-      {nav === 'fav' && (
-        <Box sx={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: NAV_H, bgcolor: palette.page, zIndex: (t) => t.zIndex.appBar - 1, display: 'flex', flexDirection: 'column', animation: `${fadeIn} 120ms ease-out` }}>
-          <Box sx={{ position: 'sticky', top: 0, zIndex: (t) => t.zIndex.appBar, px: 1.5, pt: 'calc(env(safe-area-inset-top) + 10px)', pb: 1, bgcolor: '#fff', backdropFilter: 'saturate(180%) blur(8px)', borderBottom: '1px solid #EEE6D7' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Button
-                onClick={() => setNav('inicio')}
-                startIcon={<ArrowBackRoundedIcon />}
-                variant="contained"
-                sx={{
-                  bgcolor: palette.headerGreen,
-                  '&:hover': { bgcolor: '#0c4027' },
-                  color: '#fff',
-                  borderRadius: 999,
-                  px: 1.25,
-                  py: 0.65,
-                  minHeight: 36,
-                  textTransform: 'none',
-                  fontWeight: 800,
-                  boxShadow: '0 6px 18px rgba(15,81,50,.24)',
-                }}
-              >
-                Voltar
-              </Button>
-              <Typography sx={{ fontFamily: "'Alfa Slab One', Georgia, serif", mt: '50px', fontSize: 20, color: palette.textPrimary }}>Favoritos</Typography>
-              <Box sx={{ visibility: 'hidden' }}>
-                <Button startIcon={<ArrowBackRoundedIcon />} variant="contained" sx={{ borderRadius: 999, px: 1.25, py: 0.65, minHeight: 36 }}>Voltar</Button>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ flex: 1, overflow: 'auto', px: 2, pt: '63px', pb: 2 }}>
-            <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Seus favoritos
-              </Typography>
-              {favorites.length === 0 ? (
-                <Typography sx={{ color: '#9AA0A6', textAlign: 'center', py: 4 }}>
-                  Você ainda não favoritou nenhum item.
-                </Typography>
-              ) : (
-                <Grid container direction="column">
-                  {favorites.map((item, idx) => {
-                    const burstKey = (burstMap[item.id] || 0) + 1000;
-                    const ratedValue = Number(ratings[item.id] || 0);
-                    return (
-                      <Box key={`fav-${item.id}`}>
-                        <Box
-                          onClick={() => openDetail(item)}
-                          sx={{
-                            py: 1,
-                            display: 'grid',
-                            gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsFav}px`,
-                            columnGap: 1.5,
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            ...rowPerfSX,
-                          }}
-                        >
-                          <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                            <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          </Box>
+        {/* CHOPES (mesma estrutura visual, sem overlay fixo) */}
+        {nav === 'chopes' && (
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none', animation: `${fadeIn} 120ms ease-out` }}>
+            <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+              Nossos chopes
+            </Typography>
+            <Grid container direction="column">
+              {chopes.map((item, idx) => {
+                const burstKey = (burstMap[item.id] || 0) + 2000;
+                return (
+                  <Box key={`chope-${item.id}`}>
+                    <Box
+                      onClick={() => openDetail(item)}
+                      sx={{
+                        py: 1,
+                        display: 'grid',
+                        gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`,
+                        columnGap: 1.5,
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        ...rowPerfSX,
+                      }}
+                    >
+                      <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                        <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      </Box>
 
-                          <Box sx={{ minWidth: 0, mr: 1 }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
-                              {item.title}
-                            </Typography>
-                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
-                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
-                            <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                              R$ {item.price}
-                            </Typography>
-                          </Box>
+                      <Box sx={{ minWidth: 0, mr: 1 }}>
+                        <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
+                          {item.title}
+                        </Typography>
+                        {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
+                        {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
+                        <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
+                          R$ {item.price}
+                        </Typography>
+                      </Box>
 
-                          <Box
+                      <Box
+                        sx={actionColSX}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
+                        <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
+                          <Typography
                             sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'flex-end',
-                              justifyContent: 'space-between',
-                              justifySelf: 'end',
-                              minHeight: SIZES.thumb,
-                              pr: .5,
+                              position: 'absolute',
+                              top: 'calc(100% + 2px)',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: palette.heart,
+                              whiteSpace: 'nowrap',
+                              pointerEvents: 'none',
                             }}
-                            onClick={(e) => e.stopPropagation()}
                           >
-                            {/* Coração */}
-                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <HeartBurst liked={true} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
-                              <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                                <Typography
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 'calc(100% + 2px)',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    color: palette.heart,
-                                    whiteSpace: 'nowrap',
-                                    pointerEvents: 'none',
-                                  }}
-                                >
-                                  Gostei
-                                </Typography>
-                              </Fade>
-                            </Box>
+                            Gostei
+                          </Typography>
+                        </Fade>
+                      </Box>
+                    </Box>
+                    {idx < chopes.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
+                  </Box>
+                );
+              })}
+            </Grid>
+          </Paper>
+        )}
 
-                            {/* Estrelas */}
-                            <Box>
-                              <StarRating
-                                name={`rate-${item.id}`}
-                                value={ratedValue}
-                                onChange={(e, newVal) => { e?.stopPropagation?.(); handleRate(item, newVal, e); }}
-                              />
-                            </Box>
+        {/* FAVORITOS (seção normal) */}
+        {nav === 'fav' && (
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none', animation: `${fadeIn} 120ms ease-out` }}>
+            <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+              Seus favoritos
+            </Typography>
+            {favorites.length === 0 ? (
+              <Typography sx={{ color: '#9AA0A6', textAlign: 'center', py: 4 }}>
+                Você ainda não favoritou nenhum item.
+              </Typography>
+            ) : (
+              <Grid container direction="column">
+                {favorites.map((item, idx) => {
+                  const burstKey = (burstMap[item.id] || 0) + 1000;
+                  const ratedValue = Number(ratings[item.id] || 0);
+                  return (
+                    <Box key={`fav-${item.id}`}>
+                      <Box
+                        onClick={() => openDetail(item)}
+                        sx={{
+                          py: 1,
+                          display: 'grid',
+                          gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsFav}px`,
+                          columnGap: 1.5,
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          ...rowPerfSX,
+                        }}
+                      >
+                        <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                          <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        </Box>
+
+                        <Box sx={{ minWidth: 0, mr: 1 }}>
+                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
+                            {item.title}
+                          </Typography>
+                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
+                          {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
+                          <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
+                            R$ {item.price}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                            justifyContent: 'space-between',
+                            justifySelf: 'end',
+                            minHeight: SIZES.thumb,
+                            pr: .5,
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <HeartBurst liked={true} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
+                            <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
+                              <Typography
+                                sx={{
+                                  position: 'absolute',
+                                  top: 'calc(100% + 2px)',
+                                  left: '50%',
+                                  transform: 'translateX(-50%)',
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  color: palette.heart,
+                                  whiteSpace: 'nowrap',
+                                  pointerEvents: 'none',
+                                }}
+                              >
+                                Gostei
+                              </Typography>
+                            </Fade>
+                          </Box>
+
+                          <Box>
+                            <StarRating
+                              name={`rate-${item.id}`}
+                              value={ratedValue}
+                              onChange={(e, newVal) => { e?.stopPropagation?.(); handleRate(item, newVal, e); }}
+                            />
                           </Box>
                         </Box>
-                        {idx < favorites.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
                       </Box>
-                    );
-                  })}
-                </Grid>
-              )}
-            </Paper>
-          </Box>
-        </Box>
-      )}
+                      {idx < favorites.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
+                    </Box>
+                  );
+                })}
+              </Grid>
+            )}
+          </Paper>
+        )}
+      </Box>
 
-      {/* Bottom Nav */}
+      {/* Bottom Nav fixa */}
       <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
         <BottomNavigation
           value={nav}
@@ -1217,7 +1148,6 @@ function CardapioInner() {
         <Box sx={{ position: 'fixed', inset: 0, bgcolor: '#fff', zIndex: (t) => t.zIndex.tooltip + 20, display: 'flex', flexDirection: 'column', animation: `${fadeIn} 120ms ease-out` }}>
           <Box sx={{ position: 'relative', height: { xs: '42vh', sm: '50vh' }, overflow: 'hidden' }}>
             <Box component="img" src={detail.image} alt={detail.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, background: 'linear-gradient(to top, rgba(0,0,0,.22), transparent)' }} />
             <Box sx={{ position: 'absolute', left: 0, right: 0, top: { xs: 'calc(env(safe-area-inset-top) + 28px)', sm: 28 }, px: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <IconButton onClick={closeDetail} sx={{ bgcolor: 'rgba(0,0,0,.55)', '&:hover': { bgcolor: 'rgba(0,0,0,.65)' }, boxShadow: '0 2px 12px rgba(0,0,0,.35)' }}>
                 <ArrowBackRoundedIcon sx={{ color: '#fff' }} />
@@ -1275,7 +1205,7 @@ function CardapioInner() {
         </Box>
       )}
 
-      {/* Modais de avaliação */}
+      {/* Modais (avaliação / review) */}
       <Modal open={reviewSheetOpen} onClose={() => setReviewSheetOpen(false)}>
         <Box
           sx={{
