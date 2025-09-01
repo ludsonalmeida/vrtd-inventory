@@ -27,6 +27,7 @@ import RedirectPage from '../pages/RedirectPage';
 import PixelLoader from '../components/PixelLoader';
 import ChopesPage from '../pages/ChopesPage';
 import LGPD from '../pages/lgpd.jsx';
+import CardapioLayout from '../pages/CardapioLayout.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ export default function AppRoutes() {
         <Route path="/" element={<><HomePage /><Footer /></>} />
         {/* Página de Cardápio pública, sem layout extra */}
         <Route path="/cardapio" element={<CardapioPage />} />
+        <Route path="/cardapio-lay" element={<CardapioLayout />} />
         <Route path="/clubedochope" element={<SignUpCard />} />
         <Route path="/politicas-de-privacidade" element={<LGPD />} />
         
