@@ -48,7 +48,13 @@ const palette = {
   promoFg: '#C63830',
 };
 
-const SIZES = { thumb: 104, actionsCol: 56, actionsFav: 128, title: 15.5, price: 14.5 };
+const SIZES = {
+  thumb: 104,
+  actionsCol: 44,
+  actionsFav: 128,
+  title: 16,
+  price: 14.5
+};
 const NAV_H = 'calc(64px + env(safe-area-inset-bottom))';
 const SINGLE_UNIT = 'Sobradinho, Distrito Federal';
 
@@ -94,25 +100,25 @@ const samplePromos = [
   { id: 'promo-burg', title: 'Burger Artesanal Cheddar', subtitle: 'Smoke House', subtitle2: 'Pão brioche, cheddar e bacon.', price: '29.90', oldPrice: '41.90', image: 'https://images.unsplash.com/photo-1551782450-17144c3aee06?w=1000&q=80&auto=format&fit=crop', liked: false },
 ];
 
-/* --- CHOPES 300 e 400 ml --- */
+/* --- CHOPES com ABV/IBU --- */
 const sampleChopes = [
-  { id: 'chope-pilsen-300',  title: 'Chope Pilsen 300ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '12.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-pilsen-400',  title: 'Chope Pilsen 400ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '16.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false },
+  { id: 'chope-pilsen-300',  title: 'Chope Pilsen 300ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '12.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 4.5, ibu: 10 },
+  { id: 'chope-pilsen-400',  title: 'Chope Pilsen 400ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '16.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 4.5, ibu: 10 },
 
-  { id: 'chope-ipa-300',     title: 'Chope IPA 300ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '16.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-ipa-400',     title: 'Chope IPA 400ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '21.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false },
+  { id: 'chope-ipa-300',     title: 'Chope IPA 300ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '16.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 6.2, ibu: 55 },
+  { id: 'chope-ipa-400',     title: 'Chope IPA 400ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '21.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 6.2, ibu: 55 },
 
-  { id: 'chope-weiss-300',   title: 'Chope Weiss 300ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '15.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-weiss-400',   title: 'Chope Weiss 400ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '19.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false },
+  { id: 'chope-weiss-300',   title: 'Chope Weiss 300ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '15.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.2, ibu: 12 },
+  { id: 'chope-weiss-400',   title: 'Chope Weiss 400ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '19.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.2, ibu: 12 },
 
-  { id: 'chope-stout-300',   title: 'Chope Stout 300ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '17.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-stout-400',   title: 'Chope Stout 400ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '22.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false },
+  { id: 'chope-stout-300',   title: 'Chope Stout 300ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '17.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.8, ibu: 35 },
+  { id: 'chope-stout-400',   title: 'Chope Stout 400ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '22.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.8, ibu: 35 },
 
-  { id: 'chope-red-ale-300', title: 'Chope Red Ale 300ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '15.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-red-ale-400', title: 'Chope Red Ale 400ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '19.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false },
+  { id: 'chope-red-ale-300', title: 'Chope Red Ale 300ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '15.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 20 },
+  { id: 'chope-red-ale-400', title: 'Chope Red Ale 400ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '19.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 20 },
 
-  { id: 'chope-witbier-300', title: 'Chope Witbier 300ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '15.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-witbier-400', title: 'Chope Witbier 400ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '19.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false },
+  { id: 'chope-witbier-300', title: 'Chope Witbier 300ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '15.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 15 },
+  { id: 'chope-witbier-400', title: 'Chope Witbier 400ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '19.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 15 },
 ];
 
 const Analytics = (() => {
@@ -226,7 +232,15 @@ const appear = keyframes`0%{opacity:0;transform:translateY(8px)}100%{opacity:1;t
 const fadeIn = keyframes`0%{opacity:0}100%{opacity:1}`;
 const skBg = '#E8E5DB';
 
-/* ---- HEART (sem camadas GPU) ---- */
+/* helper de clamp pra multilinha */
+const clamp = (lines) => ({
+  display: '-webkit-box',
+  WebkitLineClamp: lines,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+});
+
+/* ---- HEART ---- */
 const HeartBurst = React.memo(function HeartBurst({ liked, onClick, withTooltip = false, tooltipOpen = false, tooltipRef = null, burstKey = 0 }) {
   const particles = Array.from({ length: 8 }).map((_, i) => {
     const angle = (i / 8) * Math.PI * 2, r = 22;
@@ -255,20 +269,17 @@ const HeartBurst = React.memo(function HeartBurst({ liked, onClick, withTooltip 
     : <FavoriteBorderIcon sx={{ color: '#9AA0A6', animation: burstKey ? `${pop} 360ms ease-out` : 'none' }} />;
 
   const btn = (
-    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-      {burstKey ? particles : null}
-      <IconButton
-        size="small"
-        disableRipple
-        disableFocusRipple
-        onClick={onClick}
-        sx={{ p: 0.5, position: 'relative', zIndex: 1 }}
-        aria-label="favoritar"
-        ref={tooltipRef}
-      >
-        {icon}
-      </IconButton>
-    </Box>
+    <IconButton
+      size="small"
+      disableRipple
+      disableFocusRipple
+      onClick={onClick}
+      sx={{ p: 0.5, position: 'relative', zIndex: 1 }}
+      aria-label="favoritar"
+      ref={tooltipRef}
+    >
+      {icon}
+    </IconButton>
   );
 
   return withTooltip ? (
@@ -470,6 +481,21 @@ function CardapioInner() {
   const [reviewSheetOpen, setReviewSheetOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Propriedades marcadas (ABV/IBU) por item
+  const [propsMarked, setPropsMarked] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cardapio/propsMarked') || '{}'); } catch { return {}; }
+  });
+  const toggleProp = (item, key) => {
+    setPropsMarked(prev => {
+      const cur = new Set(prev[item.id] || []);
+      cur.has(key) ? cur.delete(key) : cur.add(key);
+      const next = { ...prev, [item.id]: Array.from(cur) };
+      try { localStorage.setItem('cardapio/propsMarked', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const isPropMarked = (item, key) => !!(propsMarked[item.id] || []).includes(key);
+
   const openReviewFlow = async () => {
     const shareUrl = REVIEW_URLS[1];
     if (navigator.share) {
@@ -621,7 +647,6 @@ function CardapioInner() {
     setTimeout(() => openDetail(it), 0);
   };
 
-  // Mantém a mesma estrutura de linha em todas as páginas
   const rowPerfSX = {};
   const actionColSX = {
     display: 'inline-flex',
@@ -664,7 +689,7 @@ function CardapioInner() {
         </Box>
       )}
 
-      {/* Conteúdo PRINCIPAL / CHOPES / FAVORITOS – todos como seções normais */}
+      {/* Conteúdo */}
       <Box sx={{ mx: 2, mt: 2, mb: `calc(${NAV_H} + 6px)` }}>
         {/* Home */}
         {nav === 'inicio' && (
@@ -689,11 +714,19 @@ function CardapioInner() {
                             <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           </Box>
                           <Box sx={{ minWidth: 0, mr: 1 }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
+                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.2, ...clamp(2) }}>
                               {item.title}
                             </Typography>
-                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
-                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
+                            {item.subtitle && (
+                              <Typography sx={{ mt: .25, fontSize: 13.5, color: palette.textMuted, ...clamp(2) }}>
+                                {item.subtitle}
+                              </Typography>
+                            )}
+                            {item.subtitle2 && (
+                              <Typography sx={{ fontSize: 13.5, color: palette.textMuted, ...clamp(1) }}>
+                                {item.subtitle2}
+                              </Typography>
+                            )}
                             <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
                               R$ {item.price}
                             </Typography>
@@ -752,11 +785,11 @@ function CardapioInner() {
                             <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           </Box>
                           <Box sx={{ minWidth: 0, mr: 1 }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
+                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.2, ...clamp(2) }}>
                               {item.title}
                             </Typography>
-                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
-                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
+                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: 13.5, color: palette.textMuted, ...clamp(2) }}>{item.subtitle}</Typography>}
+                            {item.subtitle2 && <Typography sx={{ fontSize: 13.5, color: palette.textMuted, ...clamp(1) }}>{item.subtitle2}</Typography>}
                             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: .6, flexWrap: 'wrap' }}>
                               <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
                                 R$ {item.price}
@@ -805,7 +838,7 @@ function CardapioInner() {
           </>
         )}
 
-        {/* CHOPES (mesma estrutura visual, sem overlay fixo) */}
+        {/* CHOPES - texto com mais espaço (coração sobre a foto) */}
         {nav === 'chopes' && (
           <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none', animation: `${fadeIn} 120ms ease-out` }}>
             <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
@@ -821,50 +854,33 @@ function CardapioInner() {
                       sx={{
                         py: 1,
                         display: 'grid',
-                        gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`,
-                        columnGap: 1.5,
+                        gridTemplateColumns: { xs: '88px minmax(0,1fr)', sm: `${SIZES.thumb}px minmax(0,1fr)` }, // 2 colunas -> mais área pro texto
+                        columnGap: 1.25,
                         alignItems: 'center',
                         cursor: 'pointer',
                         ...rowPerfSX,
                       }}
                     >
-                      <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                      <Box sx={{ position: 'relative', width: { xs: 88, sm: SIZES.thumb }, height: { xs: 88, sm: SIZES.thumb }, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
                         <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        {/* coração sobre a foto (top/right) */}
+                        <Box
+                          onClick={(e) => { e.stopPropagation(); handleFavoriteClick(item, e); }}
+                          sx={{ position: 'absolute', top: 6, right: 6, bgcolor: 'rgba(255,255,255,.82)', borderRadius: 99, display: 'grid', placeItems: 'center', p: .25 }}
+                        >
+                          <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
+                        </Box>
                       </Box>
 
-                      <Box sx={{ minWidth: 0, mr: 1 }}>
-                        <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
+                      <Box sx={{ minWidth: 0, mr: 0.25 }}>
+                        <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 800, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.18, ...clamp(2) }}>
                           {item.title}
                         </Typography>
-                        {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
-                        {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
-                        <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
+                        {item.subtitle && <Typography sx={{ mt: .25, fontSize: 13.5, color: palette.textMuted, ...clamp(2) }}>{item.subtitle}</Typography>}
+                        {item.subtitle2 && <Typography sx={{ fontSize: 13.5, color: palette.textMuted, ...clamp(1) }}>{item.subtitle2}</Typography>}
+                        <Typography sx={{ mt: .55, fontFamily: '"Bitter", serif', fontWeight: 800, color: palette.textPrimary, fontSize: SIZES.price }}>
                           R$ {item.price}
                         </Typography>
-                      </Box>
-
-                      <Box
-                        sx={actionColSX}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
-                        <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                          <Typography
-                            sx={{
-                              position: 'absolute',
-                              top: 'calc(100% + 2px)',
-                              left: '50%',
-                              transform: 'translateX(-50%)',
-                              fontSize: 11,
-                              fontWeight: 800,
-                              color: palette.heart,
-                              whiteSpace: 'nowrap',
-                              pointerEvents: 'none',
-                            }}
-                          >
-                            Gostei
-                          </Typography>
-                        </Fade>
                       </Box>
                     </Box>
                     {idx < chopes.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
@@ -875,7 +891,7 @@ function CardapioInner() {
           </Paper>
         )}
 
-        {/* FAVORITOS (seção normal) */}
+        {/* FAVORITOS */}
         {nav === 'fav' && (
           <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none', animation: `${fadeIn} 120ms ease-out` }}>
             <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
@@ -897,23 +913,23 @@ function CardapioInner() {
                         sx={{
                           py: 1,
                           display: 'grid',
-                          gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsFav}px`,
-                          columnGap: 1.5,
+                          gridTemplateColumns: { xs: '88px minmax(0,1fr) 128px', sm: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsFav}px` },
+                          columnGap: 1.25,
                           alignItems: 'center',
                           cursor: 'pointer',
                           ...rowPerfSX,
                         }}
                       >
-                        <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                        <Box sx={{ width: { xs: 88, sm: SIZES.thumb }, height: { xs: 88, sm: SIZES.thumb }, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
                           <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         </Box>
 
-                        <Box sx={{ minWidth: 0, mr: 1 }}>
-                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
+                        <Box sx={{ minWidth: 0, mr: 0.5 }}>
+                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.2, ...clamp(2) }}>
                             {item.title}
                           </Typography>
-                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
-                          {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
+                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: 13.5, color: palette.textMuted, ...clamp(2) }}>{item.subtitle}</Typography>}
+                          {item.subtitle2 && <Typography sx={{ fontSize: 13.5, color: palette.textMuted, ...clamp(1) }}>{item.subtitle2}</Typography>}
                           <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
                             R$ {item.price}
                           </Typography>
@@ -926,7 +942,7 @@ function CardapioInner() {
                             alignItems: 'flex-end',
                             justifyContent: 'space-between',
                             justifySelf: 'end',
-                            minHeight: SIZES.thumb,
+                            minHeight: { xs: 88, sm: SIZES.thumb },
                             pr: .5,
                           }}
                           onClick={(e) => e.stopPropagation()}
@@ -971,7 +987,7 @@ function CardapioInner() {
         )}
       </Box>
 
-      {/* Bottom Nav fixa */}
+      {/* Bottom Nav */}
       <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
         <BottomNavigation
           value={nav}
@@ -1084,6 +1100,12 @@ function CardapioInner() {
               </Typography>
             )}
 
+            {searchText && !searchLoading && searchResults.length === 0 && (
+              <Typography sx={{ color: '#9AA0A6', fontSize: 14, textAlign: 'center', py: 3 }}>
+                Nenhum item encontrado para “{searchText}”.
+              </Typography>
+            )}
+
             {searchText && searchLoading && (
               <Box>
                 <SearchRowSkeleton /><Divider />
@@ -1092,12 +1114,6 @@ function CardapioInner() {
                 <SearchRowSkeleton /><Divider />
                 <SearchRowSkeleton />
               </Box>
-            )}
-
-            {searchText && !searchLoading && searchResults.length === 0 && (
-              <Typography sx={{ color: '#9AA0A6', fontSize: 14, textAlign: 'center', py: 3 }}>
-                Nenhum item encontrado para “{searchText}”.
-              </Typography>
             )}
 
             {searchText && !searchLoading && searchResults.length > 0 && (
@@ -1192,6 +1208,45 @@ function CardapioInner() {
                 </>
               )}
             </Box>
+
+            {/* Características do produto: ABV/IBU marcáveis */}
+            {(typeof detail.abv === 'number' || typeof detail.ibu === 'number') && (
+              <>
+                <Typography sx={{ fontFamily: "'Bitter', serif", fontWeight: 800, fontSize: 18, color: palette.textPrimary, mb: 1 }}>
+                  Características
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  {typeof detail.abv === 'number' && (
+                    <Chip
+                      onClick={() => toggleProp(detail, 'abv')}
+                      label={`ABV ${String(detail.abv).replace('.', ',')}%`}
+                      clickable
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 800,
+                        ...(isPropMarked(detail, 'abv')
+                          ? { bgcolor: palette.ring, color: '#fff' }
+                          : { bgcolor: '#F2F5F4', color: palette.textMuted }),
+                      }}
+                    />
+                  )}
+                  {typeof detail.ibu === 'number' && (
+                    <Chip
+                      onClick={() => toggleProp(detail, 'ibu')}
+                      label={`IBU ${detail.ibu}`}
+                      clickable
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 800,
+                        ...(isPropMarked(detail, 'ibu')
+                          ? { bgcolor: palette.ring, color: '#fff' }
+                          : { bgcolor: '#F2F5F4', color: palette.textMuted }),
+                      }}
+                    />
+                  )}
+                </Box>
+              </>
+            )}
 
             <Typography sx={{ fontFamily: "'Bitter', serif", fontWeight: 800, fontSize: 18, color: palette.textPrimary, mb: 1 }}>
               Sugestão de acompanhamento
