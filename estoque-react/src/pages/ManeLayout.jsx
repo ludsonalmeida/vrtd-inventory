@@ -7,6 +7,8 @@ import {
   IconButton,
   BottomNavigation,
   BottomNavigationAction,
+  useTheme,
+  useMediaQuery,
   Divider,
   Fade,
   InputBase,
@@ -21,8 +23,8 @@ import {
 } from '@mui/material';
 import { keyframes } from '@mui/system';
 
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import SportsBarIcon from '@mui/icons-material/SportsBar';
+import HomeIcon from '@mui/icons-material/Home';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SearchIcon from '@mui/icons-material/Search';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -48,13 +50,14 @@ const palette = {
   promoFg: '#C63830',
 };
 
-const SIZES = { thumb: 104, actionsCol: 56, actionsFav: 128, title: 15.5, price: 14.5 };
+const SIZES = { thumb: 104, actionsCol: 56, title: 15.5, price: 14.5 };
 const NAV_H = 'calc(64px + env(safe-area-inset-bottom))';
 const SINGLE_UNIT = 'Sobradinho, Distrito Federal';
 
 const GA_ID = import.meta.env?.VITE_GA_ID || 'G-XXXXXXXXXX';
 const FB_PIXEL_ID = import.meta.env?.VITE_FB_PIXEL_ID || '000000000000000';
 
+// Substitui/dispensa o GOOGLE_REVIEW_URL
 // --- Review (Google) ---
 const GOOGLE_REVIEW_CID = '2138163599891563158'; // Porks Sobradinho
 const REVIEW_URLS = [
@@ -63,11 +66,12 @@ const REVIEW_URLS = [
   `https://www.google.com.br/maps?cid=${GOOGLE_REVIEW_CID}&hl=pt-BR`,
 ];
 
+
 function GoogleGlyph({ size = 22 }) {
   return (
     <Box sx={{ width: size, height: size, display: 'inline-flex' }} aria-hidden>
       <svg viewBox="0 0 48 48" width={size} height={size}>
-        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C33.9 6.3 29.2 4 24 4 16.1 4 9.4 8.5 6.3 14.7z" />
+        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C33.9 6.3 29.2 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10.4 0 19-7.5 19-20 0-1.1-.1-2.3-.4-3.5z" />
         <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C33.9 6.3 29.2 4 24 4 16.1 4 9.4 8.5 6.3 14.7z" />
         <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.7 13.6-4.7l-6.3-5.2C29.3 36 26.8 37 24 37c-5.2 0-9.6-3.5-11.1-8.2l-6.6 5.1C9.4 39.5 16.1 44 24 44z" />
         <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.4-4.2 6-8.3 6-3.1 0-5.9-1.8-7.2-4.4l-6.6 5.1C15.4 39.5 19.5 42 24 42c10.4 0 19-7.5 19-20 0-1.1-.1-2.3-.4-3.5z" />
@@ -75,6 +79,9 @@ function GoogleGlyph({ size = 22 }) {
     </Box>
   );
 }
+
+
+
 
 const slides = [
   { title1: 'Queridinhos', title2: 'dos Chefs', desc: 'Sábado, domingo e feriados — O dia todo', image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=1200&q=80&auto=format&fit=crop' },
@@ -92,27 +99,6 @@ const samplePromos = [
   { id: 'promo-pizza', title: 'Pizza Margherita', subtitle: 'Forno Nápoles', subtitle2: 'Massa fina, tomate e manjericão.', price: '39.90', oldPrice: '54.90', image: 'https://images.unsplash.com/photo-1548365328-9f547fb0953c?w=1000&q=80&auto=format&fit=crop', liked: false },
   { id: 'promo-pasta', title: 'Penne ao Ragu', subtitle: 'Trattoria Bella', subtitle2: 'Ragu de carne cozido lentamente.', price: '47.90', oldPrice: '62.90', image: 'https://images.unsplash.com/photo-1542444459-db63c1f6a68d?w=1000&q=80&auto=format&fit=crop', liked: false },
   { id: 'promo-burg', title: 'Burger Artesanal Cheddar', subtitle: 'Smoke House', subtitle2: 'Pão brioche, cheddar e bacon.', price: '29.90', oldPrice: '41.90', image: 'https://images.unsplash.com/photo-1551782450-17144c3aee06?w=1000&q=80&auto=format&fit=crop', liked: false },
-];
-
-/* --- CHOPES 300 e 400 ml --- */
-const sampleChopes = [
-  { id: 'chope-pilsen-300',  title: 'Chope Pilsen 300ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '12.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-pilsen-400',  title: 'Chope Pilsen 400ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '16.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false },
-
-  { id: 'chope-ipa-300',     title: 'Chope IPA 300ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '16.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-ipa-400',     title: 'Chope IPA 400ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '21.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false },
-
-  { id: 'chope-weiss-300',   title: 'Chope Weiss 300ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '15.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-weiss-400',   title: 'Chope Weiss 400ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '19.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false },
-
-  { id: 'chope-stout-300',   title: 'Chope Stout 300ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '17.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-stout-400',   title: 'Chope Stout 400ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '22.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false },
-
-  { id: 'chope-red-ale-300', title: 'Chope Red Ale 300ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '15.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-red-ale-400', title: 'Chope Red Ale 400ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '19.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false },
-
-  { id: 'chope-witbier-300', title: 'Chope Witbier 300ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '15.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false },
-  { id: 'chope-witbier-400', title: 'Chope Witbier 400ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '19.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false },
 ];
 
 const Analytics = (() => {
@@ -143,7 +129,7 @@ const Analytics = (() => {
       await loadScript('https://connect.facebook.net/en_US/fbevents.js', 'fb-pixel-script');
     }
     window.fbq('init', FB_PIXEL_ID);
-    try { window.fbq?.('consent', 'grant'); } catch { }
+    try { window.fbq('consent', 'grant'); } catch { }
     inited = true;
   };
   const initIfNeeded = () => init();
@@ -221,56 +207,30 @@ const Analytics = (() => {
 })();
 
 const pop = keyframes`0%{transform:scale(1)}35%{transform:scale(1.28)}100%{transform:scale(1)}`;
+const ringExpand = keyframes`0%{transform:scale(.4);opacity:.55}70%{transform:scale(1.6);opacity:.12}100%{transform:scale(1.9);opacity:0}`;
 const makeParticle = (dx, dy) => keyframes`0%{transform:translate(0,0);opacity:1}100%{transform:translate(${dx}px,${dy}px);opacity:0}`;
 const appear = keyframes`0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}`;
 const fadeIn = keyframes`0%{opacity:0}100%{opacity:1}`;
 const skBg = '#E8E5DB';
 
-/* ---- HEART (sem camadas GPU) ---- */
-const HeartBurst = React.memo(function HeartBurst({ liked, onClick, withTooltip = false, tooltipOpen = false, tooltipRef = null, burstKey = 0 }) {
+/* ---- HEART ---- */
+function HeartBurst({ liked, onClick, withTooltip = false, tooltipOpen = false, tooltipRef = null, burstKey = 0 }) {
   const particles = Array.from({ length: 8 }).map((_, i) => {
     const angle = (i / 8) * Math.PI * 2, r = 22;
     const kf = makeParticle(Math.cos(angle) * r, Math.sin(angle) * r);
-    return (
-      <Box
-        key={`${burstKey}-${i}`}
-        sx={{
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          width: 5,
-          height: 5,
-          borderRadius: '50%',
-          bgcolor: palette.heart,
-          transform: 'translate(-50%,-50%)',
-          animation: `${kf} 520ms ease-out forwards`,
-          pointerEvents: 'none',
-        }}
-      />
-    );
+    return <Box key={`${burstKey}-${i}`} sx={{ position: 'absolute', left: '50%', top: '50%', width: 5, height: 5, borderRadius: '50%', bgcolor: palette.heart, transform: 'translate(-50%,-50%)', animation: `${kf} 520ms ease-out forwards`, pointerEvents: 'none' }} />;
   });
-
   const icon = liked
     ? <FavoriteIcon sx={{ color: palette.heart, animation: burstKey ? `${pop} 360ms ease-out` : 'none' }} />
     : <FavoriteBorderIcon sx={{ color: '#9AA0A6', animation: burstKey ? `${pop} 360ms ease-out` : 'none' }} />;
-
-  const btn = (
+  const btn =
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+      {burstKey ? <Box sx={{ position: 'absolute', inset: -2, borderRadius: '999px', border: `2px solid ${palette.heart}`, animation: `${ringExpand} 620ms ease-out`, pointerEvents: 'none' }} /> : null}
       {burstKey ? particles : null}
-      <IconButton
-        size="small"
-        disableRipple
-        disableFocusRipple
-        onClick={onClick}
-        sx={{ p: 0.5, position: 'relative', zIndex: 1 }}
-        aria-label="favoritar"
-        ref={tooltipRef}
-      >
+      <IconButton size="small" onClick={onClick} sx={{ p: 0.5, position: 'relative', zIndex: 1 }} aria-label="favoritar" ref={tooltipRef}>
         {icon}
       </IconButton>
-    </Box>
-  );
-
+    </Box>;
   return withTooltip ? (
     <Tooltip
       title="Favorite-me!"
@@ -297,24 +257,7 @@ const HeartBurst = React.memo(function HeartBurst({ liked, onClick, withTooltip 
       {btn}
     </Tooltip>
   ) : btn;
-});
-
-/* ---- Rating memo ---- */
-const StarRating = React.memo(function StarRating({ name, value, onChange }) {
-  return (
-    <Rating
-      name={name}
-      value={value}
-      onChange={onChange}
-      sx={{
-        lineHeight: 1,
-        cursor: 'pointer',
-        '& .MuiRating-icon': { fontSize: 20 },
-        '& .MuiRating-iconEmpty': { color: '#DADADA', opacity: 1 },
-      }}
-    />
-  );
-});
+}
 
 /* ---- SKELETONS ---- */
 const RowSkeleton = () => (
@@ -356,8 +299,10 @@ const SearchRowSkeleton = () => (
   </Box>
 );
 
+
 /* ---- GATE ---- */
 function UnitConsentScreen({ onAccepted }) {
+  const [show] = useState(true);
   const acceptAndContinue = async () => {
     const unit = SINGLE_UNIT;
     localStorage.setItem('cardapio/lgpdConsent', '1');
@@ -388,7 +333,7 @@ function UnitConsentScreen({ onAccepted }) {
       <Typography sx={{ opacity: .85, mt: 4, px: 3, textAlign: 'center' }}>
         Selecione a unidade para continuar.
       </Typography>
-      <Slide direction="up" in>
+      <Slide direction="up" in={show}>
         <Paper elevation={12} sx={{
           position: 'fixed',
           left: 0, right: 0, bottom: 0,
@@ -433,7 +378,7 @@ function UnitConsentScreen({ onAccepted }) {
   );
 }
 
-/* ---- Helpers de busca ---- */
+/* ---- Helpers de busca (JS puro) ---- */
 const normalize = (s) =>
   (s || '')
     .toLowerCase()
@@ -451,7 +396,6 @@ function CardapioInner() {
   const savedFavIds = (() => { try { return JSON.parse(localStorage.getItem('cardapio/favs') || '[]'); } catch { return []; } })();
   const [items, setItems] = useState(() => sampleItems.map(it => ({ ...it, liked: savedFavIds.includes(it.id) })));
   const [promos, setPromos] = useState(() => samplePromos.map(it => ({ ...it, liked: savedFavIds.includes(it.id) })));
-  const [chopes, setChopes] = useState(() => sampleChopes.map(it => ({ ...it, liked: savedFavIds.includes(it.id) })));
   const [loading, setLoading] = useState(true);
   const [slide, setSlide] = useState(0);
   const firstHeartRef = useRef(null);
@@ -466,12 +410,13 @@ function CardapioInner() {
   const [ratings, setRatings] = useState(() => {
     try { return JSON.parse(localStorage.getItem('cardapio/ratings') || '{}'); } catch { return {}; }
   });
-  const [notice, setNotice] = useState(null);
+  const [notice, setNotice] = useState(null); // { item, stars }
   const [reviewSheetOpen, setReviewSheetOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const openReviewFlow = async () => {
-    const shareUrl = REVIEW_URLS[1];
+    const shareUrl = REVIEW_URLS[1]; // maps com cid
+    // 1) Tenta compartilhar (não sai da aba; abre o sheet nativo)
     if (navigator.share) {
       try {
         await navigator.share({
@@ -479,9 +424,12 @@ function CardapioInner() {
           text: 'Deixe sua recomendação para o Porks Sobradinho',
           url: shareUrl,
         });
-        return;
-      } catch {}
+        return; // Usuário compartilhou/abriu no app
+      } catch (e) {
+        // cancelou ou erro -> cai pro sheet interno
+      }
     }
+    // 2) Fallback: abre nosso sheet interno (não navega)
     setReviewSheetOpen(true);
   };
 
@@ -491,30 +439,24 @@ function CardapioInner() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
+      // fallback tosco: seleciona via prompt
       window.prompt('Copie o link abaixo:', REVIEW_URLS[1]);
     }
   };
 
+
   useEffect(() => { Analytics.initIfNeeded(); Analytics.page({ name: 'inicio' }); }, []);
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1500); return () => clearTimeout(t); }, []);
-
-  useEffect(() => {
-    if (nav !== 'inicio') return;
-    const id = setInterval(() => setSlide(s => (s + 1) % slides.length), 5000);
-    return () => clearInterval(id);
-  }, [nav]);
-
+  useEffect(() => { const id = setInterval(() => setSlide(s => (s + 1) % slides.length), 5000); return () => clearInterval(id); }, []);
   useEffect(() => { const id = requestAnimationFrame(() => { if (firstHeartRef.current) setTipOpen(true); }); return () => cancelAnimationFrame(id); }, [items.length]);
-
   useEffect(() => {
-    const likedIds = [...items, ...promos, ...chopes].filter(x => x.liked).map(x => x.id);
-    try { localStorage.setItem('cardapio/favs', JSON.stringify(likedIds)); } catch {}
-    try { document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch {}
-  }, [items, promos, chopes]);
-
+    const likedIds = [...items, ...promos].filter(x => x.liked).map(x => x.id);
+    try { localStorage.setItem('cardapio/favs', JSON.stringify(likedIds)); } catch { }
+    try { document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch { }
+  }, [items, promos]);
   useEffect(() => { Analytics.page({ name: nav }); }, [nav]);
 
-  /* Busca (debounced) */
+  /* Busca: debounced e prefixo por palavra (acento-insensível) */
   useEffect(() => {
     if (!searchOpen) return;
     const q = normalize(searchText);
@@ -522,7 +464,7 @@ function CardapioInner() {
     setSearchLoading(true);
 
     const run = () => {
-      const all = [...items, ...promos, ...chopes];
+      const all = [...items, ...promos];
       const terms = q.split(' ').filter(Boolean);
 
       const scoreItem = (it) => {
@@ -536,9 +478,9 @@ function CardapioInner() {
           if (inTitleTokens) score += 3;
           else if (inAnyTokens) score += 2;
           else if (inAnyText) score += 1;
-          else return -1;
+          else return -1; // não casa todos os termos
         }
-        if (it.liked) score += 0.25;
+        if (it.liked) score += 0.25; // bônus por favorito
         return score;
       };
 
@@ -552,9 +494,9 @@ function CardapioInner() {
       setSearchLoading(false);
     };
 
-    const t = setTimeout(run, 180);
+    const t = setTimeout(run, 180); // debounce suave
     return () => clearTimeout(t);
-  }, [searchText, searchOpen, items, promos, chopes]);
+  }, [searchText, searchOpen, items, promos]);
 
   const triggerBurst = (id) => {
     setBurstMap(m => {
@@ -564,11 +506,10 @@ function CardapioInner() {
     });
   };
   const isLiked = (id) =>
-    items.some(i => i.id === id && i.liked) || promos.some(p => p.id === id && p.liked) || chopes.some(c => c.id === id && c.liked);
+    items.some(i => i.id === id && i.liked) || promos.some(p => p.id === id && p.liked);
   const toggleLikeById = (id) => {
     setItems(prev => prev.map(it => it.id === id ? { ...it, liked: !it.liked } : it));
     setPromos(prev => prev.map(it => it.id === id ? { ...it, liked: !it.liked } : it));
-    setChopes(prev => prev.map(it => it.id === id ? { ...it, liked: !it.liked } : it));
   };
   const handleFavoriteClick = (item, e) => {
     e?.stopPropagation();
@@ -578,17 +519,20 @@ function CardapioInner() {
     triggerBurst(item.id);
     if (tipOpen) setTipOpen(false);
 
+    // alterna favorito
     toggleLikeById(item.id);
 
     const nowLiked = !wasLiked;
 
+    // se acabou de virar favorito: mostra flash + ZERA as estrelas
     if (!wasLiked) {
       setLikedFlash(m => ({ ...m, [item.id]: true }));
       setTimeout(() => setLikedFlash(m => { const cp = { ...m }; delete cp[item.id]; return cp; }), 900);
 
+      // >>>>>>> AQUI: zera a avaliação para aparecer vazio <<<<<<<
       setRatings(prev => {
         const next = { ...prev, [item.id]: 0 };
-        try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch { }
         return next;
       });
     }
@@ -605,29 +549,21 @@ function CardapioInner() {
     const stars = Number(value) || 0;
     setRatings(prev => {
       const next = { ...prev, [item.id]: stars };
-      try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch {}
+      try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch { }
       return next;
     });
     setNotice({ item, stars });
     Analytics.rate(item, stars);
   };
 
-  const favorites = [...items, ...promos, ...chopes].filter(x => x.liked);
+  
+  const favorites = [...items, ...promos].filter(x => x.liked);
   const showSugSkel = loading || items.length === 0;
   const showPromoSkel = loading || promos.length === 0;
 
   const handleOpenFromSearch = (it) => {
     closeSearch();
     setTimeout(() => openDetail(it), 0);
-  };
-
-  // Sem content-visibility/containIntrinsicSize nas páginas internas
-  const rowPerfSX = {}; // removido para evitar "jelly scroll"
-  const actionColSX = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifySelf: 'end',
-    position: 'relative',
   };
 
   return (
@@ -662,257 +598,120 @@ function CardapioInner() {
         </Box>
       </Box>
 
-      {/* Seções padrão (início) */}
-      {nav === 'inicio' && (
-        <Box sx={{ mx: 2, mt: 2, mb: '70px' }}>
-          {showSugSkel ? (
-            <SectionSkeleton rows={3} />
-          ) : (
-            <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Sugestões do dia
-              </Typography>
-              <Grid container direction="column">
-                {items.map((item, idx) => {
-                  const burstKey = burstMap[item.id] || 0;
-                  return (
-                    <Box key={item.id}>
-                      <Box
-                        onClick={() => openDetail(item)}
-                        sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer', ...rowPerfSX }}
-                      >
-                        <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                          <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        </Box>
-                        <Box sx={{ minWidth: 0, mr: 1 }}>
-                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
-                            {item.title}
-                          </Typography>
-                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
-                          {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
-                          <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                            R$ {item.price}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={actionColSX}
-                          onClick={(e) => e.stopPropagation()}
-                        >
+      {/* Seções */}
+      <Box sx={{ mx: 2, mt: 2, mb: '70px' }}>
+        {showSugSkel ? (
+          <SectionSkeleton rows={3} />
+        ) : (
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
+            <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+              Sugestões do dia
+            </Typography>
+            <Grid container direction="column">
+              {items.map((item, idx) => {
+                const burstKey = burstMap[item.id] || 0;
+                return (
+                  <Box key={item.id}>
+                    <Box
+                      onClick={() => openDetail(item)}
+                      sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer' }}
+                    >
+                      <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                        <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      </Box>
+                      <Box sx={{ minWidth: 0, mr: 1 }}>
+                        <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
+                          {item.title}
+                        </Typography>
+                        {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
+                        {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
+                        <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
+                          R$ {item.price}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifySelf: 'end' }} onClick={(e) => e.stopPropagation()}>
+                        <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${palette.ring}`, backgroundColor: palette.cream, flexShrink: 0 }} aria-label="disponível" />
+                        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                           {idx === 0
                             ? <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} withTooltip tooltipOpen={tipOpen} tooltipRef={firstHeartRef} burstKey={burstKey} />
                             : <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />}
                           <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                            <Typography
-                              sx={{
-                                position: 'absolute',
-                                top: 'calc(100% + 2px)',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                fontSize: 11,
-                                fontWeight: 800,
-                                color: palette.heart,
-                                whiteSpace: 'nowrap',
-                                pointerEvents: 'none',
-                              }}
-                            >
+                            <Typography sx={{ position: 'absolute', top: 'calc(100% + 2px)', left: '50%', transform: 'translateX(-50%)', fontSize: 11, fontWeight: 800, color: palette.heart, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
                               Gostei
                             </Typography>
                           </Fade>
                         </Box>
                       </Box>
-                      {idx < items.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
                     </Box>
-                  );
-                })}
-              </Grid>
-            </Paper>
-          )}
+                    {idx < items.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
+                  </Box>
+                );
+              })}
+            </Grid>
+          </Paper>
+        )}
 
-          {showPromoSkel ? (
-            <Box sx={{ mt: 2 }}><SectionSkeleton rows={3} /></Box>
-          ) : (
-            <Paper elevation={0} sx={{ mt: 2, p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Promoções do dia
-              </Typography>
-              <Grid container direction="column">
-                {promos.map((item, idx) => {
-                  const burstKey = burstMap[item.id] || 0;
-                  return (
-                    <Box key={item.id}>
-                      <Box
-                        onClick={() => openDetail(item)}
-                        sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer', ...rowPerfSX }}
-                      >
-                        <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                          <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        </Box>
-                        <Box sx={{ minWidth: 0, mr: 1 }}>
-                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
-                            {item.title}
+        {showPromoSkel ? (
+          <Box sx={{ mt: 2 }}><SectionSkeleton rows={3} /></Box>
+        ) : (
+          <Paper elevation={0} sx={{ mt: 2, p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
+            <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+              Promoções do dia
+            </Typography>
+            <Grid container direction="column">
+              {promos.map((item, idx) => {
+                const burstKey = burstMap[item.id] || 0;
+                return (
+                  <Box key={item.id}>
+                    <Box
+                      onClick={() => openDetail(item)}
+                      sx={{ py: 1, display: 'grid', gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`, columnGap: 1.5, alignItems: 'center', cursor: 'pointer' }}
+                    >
+                      <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                        <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      </Box>
+                      <Box sx={{ minWidth: 0, mr: 1 }}>
+                        <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'break-word', hyphens: 'auto' }}>
+                          {item.title}
+                        </Typography>
+                        {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
+                        {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
+                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: .6, flexWrap: 'wrap' }}>
+                          <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
+                            R$ {item.price}
                           </Typography>
-                          {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle}</Typography>}
-                          {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{item.subtitle2}</Typography>}
-                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: .6, flexWrap: 'wrap' }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                              R$ {item.price}
-                            </Typography>
-                            <Typography sx={{ color: '#9AA0A6', textDecoration: 'line-through', fontWeight: 600, fontSize: 13 }}>
-                              R$ {item.oldPrice}
-                            </Typography>
-                            <Chip
-                              label={`-${Math.max(0, Math.round((1 - parseFloat(item.price) / parseFloat(item.oldPrice)) * 100))}%`}
-                              size="small"
-                              sx={{ bgcolor: palette.promoBg, color: palette.promoFg, fontWeight: 700, height: 22, borderRadius: '12px', fontSize: 12 }}
-                            />
-                          </Box>
+                          <Typography sx={{ color: '#9AA0A6', textDecoration: 'line-through', fontWeight: 600, fontSize: 13 }}>
+                            R$ {item.oldPrice}
+                          </Typography>
+                          <Chip
+                            label={`-${Math.max(0, Math.round((1 - parseFloat(item.price) / parseFloat(item.oldPrice)) * 100))}%`}
+                            size="small"
+                            sx={{ bgcolor: palette.promoBg, color: palette.promoFg, fontWeight: 700, height: 22, borderRadius: '12px', fontSize: 12 }}
+                          />
                         </Box>
-                        <Box
-                          sx={actionColSX}
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifySelf: 'end' }} onClick={(e) => e.stopPropagation()}>
+                        <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${palette.ring}`, backgroundColor: palette.cream, flexShrink: 0 }} aria-label="disponível" />
+                        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                           <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
                           <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                            <Typography
-                              sx={{
-                                position: 'absolute',
-                                top: 'calc(100% + 2px)',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                fontSize: 11,
-                                fontWeight: 800,
-                                color: palette.heart,
-                                whiteSpace: 'nowrap',
-                                pointerEvents: 'none',
-                              }}
-                            >
+                            <Typography sx={{ position: 'absolute', top: 'calc(100% + 2px)', left: '50%', transform: 'translateX(-50%)', fontSize: 11, fontWeight: 800, color: palette.heart, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
                               Gostei
                             </Typography>
                           </Fade>
                         </Box>
                       </Box>
-                      {idx < promos.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
                     </Box>
-                  );
-                })}
-              </Grid>
-            </Paper>
-          )}
-        </Box>
-      )}
+                    {idx < promos.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
+                  </Box>
+                );
+              })}
+            </Grid>
+          </Paper>
+        )}
+      </Box>
 
-      {/* CHOPES */}
-      {nav === 'chopes' && (
-        <Box sx={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: NAV_H, bgcolor: palette.page, zIndex: (t) => t.zIndex.appBar - 1, display: 'flex', flexDirection: 'column', animation: `${fadeIn} 120ms ease-out` }}>
-          {/* Header */}
-          <Box sx={{ position: 'sticky', top: 0, zIndex: (t) => t.zIndex.appBar, px: 1.5, pt: 'calc(env(safe-area-inset-top) + 10px)', pb: 1, bgcolor: '#fff', backdropFilter: 'saturate(180%) blur(8px)', borderBottom: '1px solid #EEE6D7' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Button
-                onClick={() => setNav('inicio')}
-                startIcon={<ArrowBackRoundedIcon />}
-                variant="contained"
-                sx={{
-                  bgcolor: palette.headerGreen,
-                  '&:hover': { bgcolor: '#0c4027' },
-                  color: '#fff',
-                  borderRadius: 999,
-                  px: 1.25,
-                  py: 0.65,
-                  minHeight: 36,
-                  textTransform: 'none',
-                  fontWeight: 800,
-                  boxShadow: '0 6px 18px rgba(15,81,50,.24)',
-                }}
-              >
-                Voltar
-              </Button>
-              <Typography sx={{ fontFamily: "'Alfa Slab One', Georgia, serif", mt: '50px', fontSize: 20, color: palette.textPrimary }}>Chopes</Typography>
-              <Box sx={{ visibility: 'hidden' }}>
-                <Button startIcon={<ArrowBackRoundedIcon />} variant="contained" sx={{ borderRadius: 999, px: 1.25, py: 0.65, minHeight: 36 }}>Voltar</Button>
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Lista de chopes */}
-          <Box sx={{ flex: 1, overflow: 'auto', px: 2, pt: '63px', pb: 2 }}>
-            <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Nossos chopes
-              </Typography>
-
-              {chopes.length === 0 ? (
-                <Typography sx={{ color: '#9AA0A6', textAlign: 'center', py: 4 }}>
-                  Nenhum chope disponível no momento.
-                </Typography>
-              ) : (
-                <Grid container direction="column">
-                  {chopes.map((item, idx) => {
-                    const burstKey = (burstMap[item.id] || 0) + 2000;
-                    return (
-                      <Box key={`chope-${item.id}`}>
-                        <Box
-                          onClick={() => openDetail(item)}
-                          sx={{
-                            py: 1,
-                            display: 'grid',
-                            gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`,
-                            columnGap: 1.5,
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            ...rowPerfSX,
-                          }}
-                        >
-                          <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                            <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          </Box>
-
-                          <Box sx={{ minWidth: 0, mr: 1 }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
-                              {item.title}
-                            </Typography>
-                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
-                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
-                            <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                              R$ {item.price}
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            sx={actionColSX}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <HeartBurst liked={item.liked} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
-                            <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                              <Typography
-                                sx={{
-                                  position: 'absolute',
-                                  top: 'calc(100% + 2px)',
-                                  left: '50%',
-                                  transform: 'translateX(-50%)',
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  color: palette.heart,
-                                  whiteSpace: 'nowrap',
-                                  pointerEvents: 'none',
-                                }}
-                              >
-                                Gostei
-                              </Typography>
-                            </Fade>
-                          </Box>
-                        </Box>
-                        {idx < chopes.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
-                      </Box>
-                    );
-                  })}
-                </Grid>
-              )}
-            </Paper>
-          </Box>
-        </Box>
-      )}
-
-      {/* Favoritos */}
+      {/* Overlay de Favoritos (respeita a BottomNavigation) */}
       {nav === 'fav' && (
         <Box sx={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: NAV_H, bgcolor: palette.page, zIndex: (t) => t.zIndex.appBar - 1, display: 'flex', flexDirection: 'column', animation: `${fadeIn} 120ms ease-out` }}>
           <Box sx={{ position: 'sticky', top: 0, zIndex: (t) => t.zIndex.appBar, px: 1.5, pt: 'calc(env(safe-area-inset-top) + 10px)', pb: 1, bgcolor: '#fff', backdropFilter: 'saturate(180%) blur(8px)', borderBottom: '1px solid #EEE6D7' }}>
@@ -949,7 +748,7 @@ function CardapioInner() {
               </Typography>
               {favorites.length === 0 ? (
                 <Typography sx={{ color: '#9AA0A6', textAlign: 'center', py: 4 }}>
-                  Você ainda não favoritou nenhum item.
+                  Você ainda não favoritou nenhum prato.
                 </Typography>
               ) : (
                 <Grid container direction="column">
@@ -963,11 +762,10 @@ function CardapioInner() {
                           sx={{
                             py: 1,
                             display: 'grid',
-                            gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsFav}px`,
+                            gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`,
                             columnGap: 1.5,
                             alignItems: 'center',
-                            cursor: 'pointer',
-                            ...rowPerfSX,
+                            cursor: 'pointer'
                           }}
                         >
                           <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
@@ -980,51 +778,60 @@ function CardapioInner() {
                             </Typography>
                             {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
                             {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
+                            {/* Apenas o preço aqui, sem estrelas */}
                             <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
                               R$ {item.price}
                             </Typography>
                           </Box>
 
+                          {/* Ações: coração em cima, estrelas logo abaixo alinhadas à direita */}
                           <Box
                             sx={{
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'flex-end',
-                              justifyContent: 'space-between',
                               justifySelf: 'end',
-                              minHeight: SIZES.thumb,
-                              pr: .5,
+                              position: 'relative',      // ← permite posicionar as estrelas no fundo
+                              minHeight: SIZES.thumb,    // ← garante a altura (igual à foto)
+                              pr: .5,                    // opcional: dá um respiro à direita
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {/* Coração */}
-                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <HeartBurst liked={true} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
-                              <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                                <Typography
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 'calc(100% + 2px)',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    color: palette.heart,
-                                    whiteSpace: 'nowrap',
-                                    pointerEvents: 'none',
-                                  }}
-                                >
-                                  Gostei
-                                </Typography>
-                              </Fade>
+                            {/* Topo: disponibilidade + coração */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${palette.ring}`, backgroundColor: palette.cream, flexShrink: 0 }} />
+                              <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <HeartBurst liked={true} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
+                                <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
+                                  <Typography sx={{ position: 'absolute', top: 'calc(100% + 2px)', left: '50%', transform: 'translateX(-50%)', fontSize: 11, fontWeight: 800, color: palette.heart, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+                                    Gostei
+                                  </Typography>
+                                </Fade>
+                              </Box>
                             </Box>
-
-                            {/* Estrelas */}
-                            <Box>
-                              <StarRating
+                            {/* Baixo: estrelas (maiores e com área de clique melhor) */}
+                            <Box
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              sx={{
+                                position: 'absolute',
+                                right: 0,
+                                bottom: -6,      // ↓ ajuste fino: 0–8px conforme preferir
+                                pr: 0.25,
+                              }}
+                            >
+                              <Rating
                                 name={`rate-${item.id}`}
                                 value={ratedValue}
                                 onChange={(e, newVal) => { e?.stopPropagation?.(); handleRate(item, newVal, e); }}
+                                sx={{
+                                  lineHeight: 1,
+                                  cursor: 'pointer',
+                                  '& .MuiRating-icon': { fontSize: 20 },   // tamanho confortável de clique
+                                  '& .MuiRating-iconEmpty': { color: '#DADADA', opacity: 1 },
+                                }}
                               />
                             </Box>
                           </Box>
@@ -1040,7 +847,7 @@ function CardapioInner() {
         </Box>
       )}
 
-      {/* Bottom Nav */}
+      {/* Bottom Nav fixa */}
       <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
         <BottomNavigation
           value={nav}
@@ -1055,8 +862,8 @@ function CardapioInner() {
             '& .Mui-selected .MuiBottomNavigationAction-label': { fontSize: '0.652rem' },
           }}
         >
-          <BottomNavigationAction label="Cardapio" value="inicio" icon={<MenuBookIcon />} />
-          <BottomNavigationAction label="CHOPES" value="chopes" icon={<SportsBarIcon />} />
+          <BottomNavigationAction label="Início" value="inicio" icon={<HomeIcon />} />
+          <BottomNavigationAction label="Restaurantes" value="rest" icon={<RestaurantIcon />} />
           <BottomNavigationAction
             label="Busca"
             value="busca"
@@ -1073,7 +880,7 @@ function CardapioInner() {
         </BottomNavigation>
       </Box>
 
-      {/* Overlay de Busca */}
+      {/* Overlay de Busca com resultados em tempo real */}
       {searchOpen && (
         <Box sx={{ position: 'fixed', inset: 0, zIndex: (t) => t.zIndex.tooltip + 10 }}>
           <Box onClick={closeSearch} sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,.18)', backdropFilter: 'blur(2px)' }} />
@@ -1114,7 +921,7 @@ function CardapioInner() {
                 autoFocus
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Buscar pratos, chopes…"
+                placeholder="Buscar pratos, restaurantes…"
                 sx={{
                   flex: 1, fontSize: 16, fontWeight: 700, color: palette.textPrimary, px: 1, '::placeholder': { color: '#9AA0A6' },
                   '& .MuiInputBase-input': { border: 0, outline: 'none !important', boxShadow: 'none !important', backgroundColor: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', WebkitTapHighlightColor: 'transparent' },
@@ -1123,7 +930,7 @@ function CardapioInner() {
                 }}
               />
               {searchText && (
-                <IconButton aria-label="limpar" onClick={() => setSearchText('')}>
+                <IconButton aria-label="limpar" onClick={() => setSearchText('')} sx={{ mr: .5 }}>
                   <CloseIcon />
                 </IconButton>
               )}
@@ -1149,7 +956,7 @@ function CardapioInner() {
 
             {!searchText && (
               <Typography sx={{ color: '#9AA0A6', fontSize: 14, textAlign: 'center', py: 3 }}>
-                Digite para buscar pratos, chopes…
+                Digite para buscar pratos, restaurantes…
               </Typography>
             )}
 
@@ -1227,7 +1034,7 @@ function CardapioInner() {
                   {isLiked(detail.id) ? <FavoriteIcon sx={{ color: palette.heart }} /> : <FavoriteBorderIcon sx={{ color: '#fff' }} />}
                 </IconButton>
                 <IconButton onClick={() => {
-                  const payload = { title: detail.title, text: `Olha este item: ${detail.title}`, url: typeof window !== 'undefined' ? window.location.href : '' };
+                  const payload = { title: detail.title, text: `Olha este prato: ${detail.title}`, url: typeof window !== 'undefined' ? window.location.href : '' };
                   if (navigator.share) navigator.share(payload).catch(() => { });
                   else { try { navigator.clipboard?.writeText(`${payload.text} ${payload.url}`); } catch { } }
                 }} sx={{ bgcolor: 'rgba(0,0,0,.55)', '&:hover': { bgcolor: 'rgba(0,0,0,.65)' }, boxShadow: '0 2px 12px rgba(0,0,0,.35)' }}>
@@ -1262,7 +1069,18 @@ function CardapioInner() {
                 </>
               )}
             </Box>
-
+            <Paper elevation={0} sx={{ border: '1px solid #eee', borderRadius: 2.5, p: 1.2, display: 'flex', alignItems: 'center', gap: 1.2, mb: 3 }}>
+              <Box sx={{ width: 36, height: 36, borderRadius: 50, bgcolor: '#FF6A33', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 12 }}>
+                ALOOM
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, color: palette.textPrimary }}>Aloom</Typography>
+                <Typography sx={{ color: palette.textMuted, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Experimente o extraordinário!
+                </Typography>
+              </Box>
+              <ChevronRightRoundedIcon />
+            </Paper>
             <Typography sx={{ fontFamily: "'Bitter', serif", fontWeight: 800, fontSize: 18, color: palette.textPrimary, mb: 1 }}>
               Sugestão de acompanhamento
             </Typography>
@@ -1275,7 +1093,7 @@ function CardapioInner() {
         </Box>
       )}
 
-      {/* Modais de avaliação */}
+      {/* Folha de avaliação (não navega sozinho) */}
       <Modal open={reviewSheetOpen} onClose={() => setReviewSheetOpen(false)}>
         <Box
           sx={{
@@ -1287,6 +1105,7 @@ function CardapioInner() {
             p: { xs: 2, sm: 3 }
           }}
         >
+          {/* Cabeçalho */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <GoogleGlyph size={24} />
             <Typography sx={{ fontWeight: 900, letterSpacing: .2 }}>
@@ -1294,6 +1113,7 @@ function CardapioInner() {
             </Typography>
           </Box>
 
+          {/* Resumo das estrelas que o usuário escolheu */}
           {notice?.stars ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <Typography sx={{ fontWeight: 800 }}>Sua avaliação:</Typography>
@@ -1309,6 +1129,7 @@ function CardapioInner() {
             Obrigado por avaliar! Você pode abrir o fluxo de recomendação no app do Google ou copiar o link.
           </Typography>
 
+          {/* Ações */}
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.25, mb: 2 }}>
             <Button
               onClick={copyReviewLink}
@@ -1337,6 +1158,7 @@ function CardapioInner() {
             </Button>
           </Box>
 
+          {/* QR para abrir no celular sem sair da aba */}
           <Box sx={{
             display: 'flex', alignItems: 'center', gap: 2,
             p: 1.5, border: '1px dashed #E5E7EB', borderRadius: 2
@@ -1357,6 +1179,7 @@ function CardapioInner() {
             </Box>
           </Box>
 
+          {/* Rodapé */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button onClick={() => setReviewSheetOpen(false)} sx={{ textTransform: 'none', borderRadius: 999 }}>
               Fechar
@@ -1365,6 +1188,8 @@ function CardapioInner() {
         </Box>
       </Modal>
 
+
+      {/* Notificação central de avaliação */}
       <Modal open={!!notice} onClose={() => setNotice(null)} aria-labelledby="rate-title">
         <Box
           sx={{
@@ -1383,6 +1208,7 @@ function CardapioInner() {
         >
           {notice && (
             <>
+              {/* topo: número + estrelas grandes */}
               <Box sx={{ mb: 1.25, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
                 <Typography id="rate-title" sx={{ fontWeight: 900, fontSize: 18 }}>
                   Você avaliou {notice.stars} {notice.stars === 1 ? 'estrela' : 'estrelas'}
@@ -1436,6 +1262,8 @@ function CardapioInner() {
 
 /* ---- PAGE ---- */
 export default function CardapioLayout() {
+  const theme = useTheme();
+  useMediaQuery(theme.breakpoints.up('sm'));
   const [gateOpen, setGateOpen] = useState(() => {
     const c = localStorage.getItem('cardapio/lgpdConsent') === '1';
     const u = localStorage.getItem('cardapio/unit');
