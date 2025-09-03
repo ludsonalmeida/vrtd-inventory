@@ -48,13 +48,7 @@ const palette = {
   promoFg: '#C63830',
 };
 
-const SIZES = {
-  thumb: 104,
-  actionsCol: 44,
-  actionsFav: 128,
-  title: 16,
-  price: 14.5
-};
+const SIZES = { thumb: 104, actionsCol: 44, actionsFav: 128, title: 16, price: 14.5 };
 const NAV_H = 'calc(64px + env(safe-area-inset-bottom))';
 const SINGLE_UNIT = 'Sobradinho, Distrito Federal';
 
@@ -100,25 +94,20 @@ const samplePromos = [
   { id: 'promo-burg', title: 'Burger Artesanal Cheddar', subtitle: 'Smoke House', subtitle2: 'Pão brioche, cheddar e bacon.', price: '29.90', oldPrice: '41.90', image: 'https://images.unsplash.com/photo-1551782450-17144c3aee06?w=1000&q=80&auto=format&fit=crop', liked: false },
 ];
 
-/* --- CHOPES com ABV/IBU --- */
+/* --- CHOPES --- */
 const sampleChopes = [
-  { id: 'chope-pilsen-300',  title: 'Chope Pilsen 300ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '12.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 4.5, ibu: 10 },
-  { id: 'chope-pilsen-400',  title: 'Chope Pilsen 400ml',  subtitle: 'Lager leve e refrescante',            subtitle2: 'ABV 4,5% • IBU 10', price: '16.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 4.5, ibu: 10 },
-
-  { id: 'chope-ipa-300',     title: 'Chope IPA 300ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '16.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 6.2, ibu: 55 },
-  { id: 'chope-ipa-400',     title: 'Chope IPA 400ml',     subtitle: 'Aromas cítricos e amargor presente',  subtitle2: 'ABV 6,2% • IBU 55', price: '21.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 6.2, ibu: 55 },
-
-  { id: 'chope-weiss-300',   title: 'Chope Weiss 300ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '15.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.2, ibu: 12 },
-  { id: 'chope-weiss-400',   title: 'Chope Weiss 400ml',   subtitle: 'Notas de banana e cravo',             subtitle2: 'ABV 5,2% • IBU 12', price: '19.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.2, ibu: 12 },
-
-  { id: 'chope-stout-300',   title: 'Chope Stout 300ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '17.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.8, ibu: 35 },
-  { id: 'chope-stout-400',   title: 'Chope Stout 400ml',   subtitle: 'Torrado, café e chocolate',           subtitle2: 'ABV 5,8% • IBU 35', price: '22.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.8, ibu: 35 },
-
-  { id: 'chope-red-ale-300', title: 'Chope Red Ale 300ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '15.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 20 },
-  { id: 'chope-red-ale-400', title: 'Chope Red Ale 400ml', subtitle: 'Maltado com leve caramelo',           subtitle2: 'ABV 5,0% • IBU 20', price: '19.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 20 },
-
-  { id: 'chope-witbier-300', title: 'Chope Witbier 300ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '15.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 15 },
-  { id: 'chope-witbier-400', title: 'Chope Witbier 400ml', subtitle: 'Trigo com casca de laranja',          subtitle2: 'ABV 5,0% • IBU 15', price: '19.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 15 },
+  { id: 'chope-pilsen-300', title: 'Chope Pilsen 300ml', subtitle: 'Lager leve e refrescante', subtitle2: 'ABV 4,5% • IBU 10', price: '12.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 4.5, ibu: 10 },
+  { id: 'chope-pilsen-400', title: 'Chope Pilsen 400ml', subtitle: 'Lager leve e refrescante', subtitle2: 'ABV 4,5% • IBU 10', price: '16.90', image: 'https://images.unsplash.com/photo-1541976076758-347942db1970?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 4.5, ibu: 10 },
+  { id: 'chope-ipa-300', title: 'Chope IPA 300ml', subtitle: 'Aromas cítricos e amargor presente', subtitle2: 'ABV 6,2% • IBU 55', price: '16.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 6.2, ibu: 55 },
+  { id: 'chope-ipa-400', title: 'Chope IPA 400ml', subtitle: 'Aromas cítricos e amargor presente', subtitle2: 'ABV 6,2% • IBU 55', price: '21.90', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 6.2, ibu: 55 },
+  { id: 'chope-weiss-300', title: 'Chope Weiss 300ml', subtitle: 'Notas de banana e cravo', subtitle2: 'ABV 5,2% • IBU 12', price: '15.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.2, ibu: 12 },
+  { id: 'chope-weiss-400', title: 'Chope Weiss 400ml', subtitle: 'Notas de banana e cravo', subtitle2: 'ABV 5,2% • IBU 12', price: '19.90', image: 'https://images.unsplash.com/photo-1541557435984-1c79685a082b?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.2, ibu: 12 },
+  { id: 'chope-stout-300', title: 'Chope Stout 300ml', subtitle: 'Torrado, café e chocolate', subtitle2: 'ABV 5,8% • IBU 35', price: '17.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.8, ibu: 35 },
+  { id: 'chope-stout-400', title: 'Chope Stout 400ml', subtitle: 'Torrado, café e chocolate', subtitle2: 'ABV 5,8% • IBU 35', price: '22.90', image: 'https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.8, ibu: 35 },
+  { id: 'chope-red-ale-300', title: 'Chope Red Ale 300ml', subtitle: 'Maltado com leve caramelo', subtitle2: 'ABV 5,0% • IBU 20', price: '15.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 20 },
+  { id: 'chope-red-ale-400', title: 'Chope Red Ale 400ml', subtitle: 'Maltado com leve caramelo', subtitle2: 'ABV 5,0% • IBU 20', price: '19.90', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 20 },
+  { id: 'chope-witbier-300', title: 'Chope Witbier 300ml', subtitle: 'Trigo com casca de laranja', subtitle2: 'ABV 5,0% • IBU 15', price: '15.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 15 },
+  { id: 'chope-witbier-400', title: 'Chope Witbier 400ml', subtitle: 'Trigo com casca de laranja', subtitle2: 'ABV 5,0% • IBU 15', price: '19.90', image: 'https://images.unsplash.com/photo-1532634896-26909d0d4b6a?w=1000&q=80&auto=format&fit=crop', liked: false, abv: 5.0, ibu: 15 },
 ];
 
 const Analytics = (() => {
@@ -232,7 +221,6 @@ const appear = keyframes`0%{opacity:0;transform:translateY(8px)}100%{opacity:1;t
 const fadeIn = keyframes`0%{opacity:0}100%{opacity:1}`;
 const skBg = '#E8E5DB';
 
-/* helper de clamp pra multilinha */
 const clamp = (lines) => ({
   display: '-webkit-box',
   WebkitLineClamp: lines,
@@ -459,6 +447,8 @@ const tokenize = (s) =>
 /* ---- INNER ---- */
 function CardapioInner() {
   const [nav, setNav] = useState('inicio');
+  const [unit] = useState(() => localStorage.getItem('cardapio/unit') || SINGLE_UNIT);
+
   const savedFavIds = (() => { try { return JSON.parse(localStorage.getItem('cardapio/favs') || '[]'); } catch { return []; } })();
   const [items, setItems] = useState(() => sampleItems.map(it => ({ ...it, liked: savedFavIds.includes(it.id) })));
   const [promos, setPromos] = useState(() => samplePromos.map(it => ({ ...it, liked: savedFavIds.includes(it.id) })));
@@ -481,7 +471,6 @@ function CardapioInner() {
   const [reviewSheetOpen, setReviewSheetOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Propriedades marcadas (ABV/IBU) por item
   const [propsMarked, setPropsMarked] = useState(() => {
     try { return JSON.parse(localStorage.getItem('cardapio/propsMarked') || '{}'); } catch { return {}; }
   });
@@ -490,7 +479,7 @@ function CardapioInner() {
       const cur = new Set(prev[item.id] || []);
       cur.has(key) ? cur.delete(key) : cur.add(key);
       const next = { ...prev, [item.id]: Array.from(cur) };
-      try { localStorage.setItem('cardapio/propsMarked', JSON.stringify(next)); } catch {}
+      try { localStorage.setItem('cardapio/propsMarked', JSON.stringify(next)); } catch { }
       return next;
     });
   };
@@ -506,7 +495,7 @@ function CardapioInner() {
           url: shareUrl,
         });
         return;
-      } catch {}
+      } catch { }
     }
     setReviewSheetOpen(true);
   };
@@ -534,13 +523,15 @@ function CardapioInner() {
 
   useEffect(() => {
     const likedIds = [...items, ...promos, ...chopes].filter(x => x.liked).map(x => x.id);
-    try { localStorage.setItem('cardapio/favs', JSON.stringify(likedIds)); } catch {}
-    try { document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch {}
+    try { localStorage.setItem('cardapio/favs', JSON.stringify(likedIds)); } catch { }
+    try { document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch { }
   }, [items, promos, chopes]);
 
   useEffect(() => { Analytics.page({ name: nav }); }, [nav]);
 
-  /* Busca (debounced) */
+  const prevNavRef = useRef('inicio');
+
+  /* Busca */
   useEffect(() => {
     if (!searchOpen) return;
     const q = normalize(searchText);
@@ -614,7 +605,7 @@ function CardapioInner() {
 
       setRatings(prev => {
         const next = { ...prev, [item.id]: 0 };
-        try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch { }
         return next;
       });
     }
@@ -622,16 +613,29 @@ function CardapioInner() {
     Analytics.like(item, nowLiked);
   };
   const openSearch = () => setSearchOpen(true);
-  const closeSearch = () => { setSearchOpen(false); setSearchLoading(false); setSearchText(''); setSearchResults([]); };
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchLoading(false);
+    setSearchText('');
+    setSearchResults([]);
+    if (nav === 'busca') {
+      setNav(prevNavRef.current || 'inicio'); // volta para a listagem
+    }
+  };
   const openDetail = (it) => { setDetail(it); Analytics.viewItem(it); };
-  const closeDetail = () => setDetail(null);
+  const closeDetail = () => {
+    setDetail(null);
+    if (nav === 'busca') {
+      setNav(prevNavRef.current || 'inicio'); // segurança extra
+    }
+  };
 
   const handleRate = (item, value, e) => {
     e?.stopPropagation?.();
     const stars = Number(value) || 0;
     setRatings(prev => {
       const next = { ...prev, [item.id]: stars };
-      try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch {}
+      try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch { }
       return next;
     });
     setNotice({ item, stars });
@@ -663,7 +667,7 @@ function CardapioInner() {
         '.search-ov input::-moz-focus-inner': { border: 0 },
       }} />
 
-      {/* Banner (só na home) */}
+      {/* Banner (apenas na home) */}
       {nav === 'inicio' && (
         <Box sx={{ mx: 2, mt: 2, borderRadius: 2.5, overflow: 'hidden', position: 'relative', height: { xs: 220, sm: 260 }, bgcolor: palette.bannerRed }}>
           <Box sx={{ position: 'absolute', inset: 0, display: 'flex', height: '100%', transition: 'transform .5s ease', transform: `translateX(-${slide * 100}%)` }}>
@@ -838,7 +842,7 @@ function CardapioInner() {
           </>
         )}
 
-        {/* CHOPES - texto com mais espaço (coração sobre a foto) */}
+        {/* CHOPES */}
         {nav === 'chopes' && (
           <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none', animation: `${fadeIn} 120ms ease-out` }}>
             <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
@@ -854,7 +858,7 @@ function CardapioInner() {
                       sx={{
                         py: 1,
                         display: 'grid',
-                        gridTemplateColumns: { xs: '88px minmax(0,1fr)', sm: `${SIZES.thumb}px minmax(0,1fr)` }, // 2 colunas -> mais área pro texto
+                        gridTemplateColumns: { xs: '88px minmax(0,1fr)', sm: `${SIZES.thumb}px minmax(0,1fr)` },
                         columnGap: 1.25,
                         alignItems: 'center',
                         cursor: 'pointer',
@@ -863,7 +867,6 @@ function CardapioInner() {
                     >
                       <Box sx={{ position: 'relative', width: { xs: 88, sm: SIZES.thumb }, height: { xs: 88, sm: SIZES.thumb }, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
                         <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        {/* coração sobre a foto (top/right) */}
                         <Box
                           onClick={(e) => { e.stopPropagation(); handleFavoriteClick(item, e); }}
                           sx={{ position: 'absolute', top: 6, right: 6, bgcolor: 'rgba(255,255,255,.82)', borderRadius: 99, display: 'grid', placeItems: 'center', p: .25 }}
@@ -985,13 +988,57 @@ function CardapioInner() {
             )}
           </Paper>
         )}
+
+        {/* OPÇÕES */}
+        {nav === 'menu' && (
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none', animation: `${fadeIn} 120ms ease-out` }}>
+            <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 28, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
+              Opções
+            </Typography>
+
+            <Paper
+              elevation={0}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                p: 1.5,
+                borderRadius: 2.5,
+                bgcolor: '#F9F6EF',     // tom claro como no exemplo
+                border: '1px solid #EEE6D7',
+                cursor: 'default',
+              }}
+            >
+              <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#EA5A47', color: '#fff', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <LocationOnRoundedIcon />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ color: palette.textMuted, fontSize: 13, fontWeight: 700, lineHeight: 1 }}>
+                  Você está em
+                </Typography>
+                <Typography sx={{ color: palette.textPrimary, fontWeight: 800, fontSize: 16, lineHeight: 1.25, mt: .25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {unit || SINGLE_UNIT}
+                </Typography>
+              </Box>
+              <KeyboardArrowRightRoundedIcon sx={{ color: '#55636A' }} />
+            </Paper>
+          </Paper>
+        )}
       </Box>
 
       {/* Bottom Nav */}
       <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
         <BottomNavigation
           value={nav}
-          onChange={(_, v) => { setNav(v); if (v === 'busca') openSearch(); }}
+          onChange={(_, v) => {
+            if (v === 'busca') {
+              prevNavRef.current = nav;      // guarda de onde veio
+              setNav('busca');
+              openSearch();
+            } else {
+              setNav(v);
+            }
+          }}
           showLabels
           sx={{
             bgcolor: '#fff',
@@ -1209,7 +1256,6 @@ function CardapioInner() {
               )}
             </Box>
 
-            {/* Características do produto: ABV/IBU marcáveis */}
             {(typeof detail.abv === 'number' || typeof detail.ibu === 'number') && (
               <>
                 <Typography sx={{ fontFamily: "'Bitter', serif", fontWeight: 800, fontSize: 18, color: palette.textPrimary, mb: 1 }}>
@@ -1260,7 +1306,7 @@ function CardapioInner() {
         </Box>
       )}
 
-      {/* Modais (avaliação / review) */}
+      {/* Modais de avaliação */}
       <Modal open={reviewSheetOpen} onClose={() => setReviewSheetOpen(false)}>
         <Box
           sx={{
