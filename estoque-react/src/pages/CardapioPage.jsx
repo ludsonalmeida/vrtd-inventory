@@ -57,19 +57,19 @@ const menuSections = [
       {
         name: 'OldWest Burger',
         description: 'Suculenta costelinha de porco grelhada, coberta por queijo canastra derretido e geleia picante.',
-        price: '25',
+        price: '28',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/oldwest.jpg',
       },
       {
         name: 'Porks Bacon Burger',
         description: 'Blend especial de porco com cheddar cremoso e fatias crocantes de bacon.',
-        price: '22',
+        price: '25',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/burger-porksbacon.jpg',
       },
       {
         name: 'Blues Burger',
         description: 'Gorgonzola intenso, bacon caramelizado e carne suculenta formam essa combinação irresistível.',
-        price: '28',
+        price: '29',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/bluesburger.jpg',
       },
     ],
@@ -80,37 +80,31 @@ const menuSections = [
       {
         name: 'Pork Burrito',
         description: 'Tortilla quentinha abraça pernil desfiado, cheddar derretido e sour cream—puro conforto em suas mãos.',
-        price: '25',
+        price: '28',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/porks-burrito.jpg',
       },
       {
         name: 'Pernil Municipal',
         description: 'Pernil macio marinado por horas, queijo mussarela e maionese artesanal—simples, mas inesquecível.',
-        price: '22',
-        image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/pernilmunicipal.jpg',
-      },
-      {
-        name: 'Pork Fish',
-        description: 'Tiras crocantes de peixe empanado, servidas com queijo e molho tártaro fresco.',
         price: '25',
-        image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/porksfish.jpg',
-      },
+        image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/pernilmunicipal.jpg',
+      }, 
       {
         name: 'Americano',
         description: 'Alcatra macia, alface crocante e queijo derretido para um clássico que nunca falha.',
-        price: '26',
+        price: '29',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/americano.jpg',
       },
       {
         name: 'Choripan',
         description: 'Linguiça suculenta e temperada, servida com chimichurri fresco.',
-        price: '20',
+        price: '25',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/choripan.jpg',
       },
       {
         name: 'Pão c/ Bife Clássico',
         description: 'Bife suculento, queijo derretido e cebolas caramelizadas—cada mordida é pura nostalgia.',
-        price: '25',
+        price: '28',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/paocombife.jpg',
       },
     ],
@@ -119,21 +113,21 @@ const menuSections = [
     title: 'Torresmos',
     items: [
       {
-        name: 'Porkspóca',
+        name: 'Porkspoca',
         description: 'Pururuca de primeira, crocante e sequinha, temperada com lemon pepper.',
-        price: '10',
+        price: '12',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/porkspoca.jpg',
       },
       {
         name: 'Torresmo Mineiro',
         description: 'Fatias finas e crocantes, com sal leve e aquela textura que vicia.',
-        price: '22',
+        price: '25',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/torresmineiro.jpg',
       },
       {
         name: 'Mix de Torresmos',
         description: 'Seleção premium de três texturas: crocante, pururuca e de tira.',
-        price: '25',
+        price: '28',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/mixdetorresmo.jpg',
       },
     ],
@@ -144,7 +138,7 @@ const menuSections = [
       {
         name: 'Costelinha BBQ',
         description: 'Costelinha ao molho BBQ com cerveja defumada.',
-        price: '28',
+        price: '32',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/costelinhabbq.jpg',
       },
       {
@@ -156,21 +150,15 @@ const menuSections = [
       {
         name: 'Bei c/ Melado',
         description: 'Tiras de bacon cobertas c/ melado de cana.',
-        price: '20',
+        price: '25',
         image:
           'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/beiconmelado.jpg',
       },
       {
         name: 'Queijinho Empanadinho',
         description: 'Gouda empanado c/ melado.',
-        price: '25',
+        price: '28',
         image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/queijinho2.jpg',
-      },
-      {
-        name: 'Bolinho de Macaxeira',
-        description: 'Recheado com carne seca.',
-        price: '25',
-        image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/macaxeira.jpg',
       },
       {
         name: 'Porks Fritas',
@@ -197,6 +185,13 @@ const menuSections = [
   {
     title: 'Para Compartilhar',
     items: [
+       {
+        name: 'Fish and Chips',
+        description: 'Iscas de peixe frito com batata rúsica c/ molho da casa.',
+        price: '45',
+        image:
+          'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/filecomfritas.jpg',
+      },
       {
         name: 'Filé c/ Gorgonzola',
         description: 'Alcatra c/ molho de gorgonzola e fritas.',
@@ -250,13 +245,6 @@ const menuSections = [
         image:
           'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/minichurros.jpg',
       },
-      {
-        name: 'Brownie de Chocolate',
-        description: 'Brownie c/ morangos.',
-        price: '20',
-        image:
-          'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/brownie.jpg',
-      },
     ],
   },
   {
@@ -300,13 +288,6 @@ const menuSections = [
   {
     title: 'Caipis',
     items: [
-      {
-        name: 'Caipi Caju',
-        description: 'Limão, vodka, licor de Caju.',
-        price: '25',
-        image:
-          'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/drinks/caipi-caju.jpg',
-      },
       {
         name: 'Caipi Bananinha',
         description: 'Limão, vodka, licor de banana.',

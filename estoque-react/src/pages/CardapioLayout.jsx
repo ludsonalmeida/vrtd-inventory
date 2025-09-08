@@ -1050,7 +1050,7 @@ function CardapioInner() {
           }}
         >
           <BottomNavigationAction label="Cardapio" value="inicio" icon={<MenuBookIcon />} />
-          <BottomNavigationAction label="CHOPES" value="chopes" icon={<SportsBarIcon />} />
+          <BottomNavigationAction label="Chope" value="chopes" icon={<SportsBarIcon />} />
           <BottomNavigationAction
             label="Busca"
             value="busca"
