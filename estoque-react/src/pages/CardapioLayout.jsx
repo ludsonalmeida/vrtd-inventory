@@ -208,17 +208,28 @@ const Analytics = (() => {
 
   const viewItem = (item) => {
     const price = parseFloat(item.price) || 0;
+    const eventID = `vc_${item.id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    // GA4
     try {
       window.gtag?.('event', 'view_item', {
         currency: 'BRL',
         value: price,
-        items: [{ item_id: item.id, item_name: item.title, item_category: item.subtitle || '', price }],
+        items: [{
+          item_id: item.id,
+          item_name: item.title,
+          item_category: item.subtitle || '',
+          price
+        }],
+        // 👇 garante unicidade pra desativar qualquer deduplicação a montante
+        event_id: eventID,
       });
     } catch { }
 
     try {
-      const eventID = `${item.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      window.fbq?.('track', 'ViewContent',
+      window.fbq?.(
+        'track',
+        'ViewContent',
         {
           content_ids: [item.id],
           content_name: item.title,
@@ -227,7 +238,7 @@ const Analytics = (() => {
           currency: 'BRL',
           content_category: item.subtitle || '',
         },
-        { eventID } // ✅ evita deduplicação
+        { eventID } // 👈 força evento único
       );
     } catch { }
   };
@@ -621,13 +632,10 @@ function CardapioInner() {
   const lastTrackedIdRef = useRef(null);
 
   const openDetail = (it) => {
-    // dispara SEMPRE no clique
-    Analytics.viewItem(it);
-
-    // força nova referência para garantir render/efeito visual
+    const unique = `${it.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    Analytics.viewItem({ ...it, eventUniqueId: unique });
     setDetail({ ...it, __openedAt: Date.now() });
   };
-
   // Corrige automaticamente se o localStorage estiver com "Águas Claras"
   useEffect(() => {
     const u = localStorage.getItem('cardapio/unit');
