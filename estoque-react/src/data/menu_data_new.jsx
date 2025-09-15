@@ -222,7 +222,7 @@ export const initialItems = [
     subtitle: 'Para Compartilhar',
     subtitle2: 'Iscas de peixe frito com batata rúsica c/ molho da casa.',
     price: '45.00',
-    image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/filecomfritas.jpg',
+    image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/fishchips.jpg',
     liked: false,
   },
   {
