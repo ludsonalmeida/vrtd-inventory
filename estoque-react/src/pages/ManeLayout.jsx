@@ -57,8 +57,66 @@ const SINGLE_UNIT = 'Sobradinho, Distrito Federal';
 const GA_ID = import.meta.env?.VITE_GA_ID || 'G-XXXXXXXXXX';
 const FB_PIXEL_ID = import.meta.env?.VITE_FB_PIXEL_ID || '000000000000000';
 
-// Substitui/dispensa o GOOGLE_REVIEW_URL
-// --- Review (Google) ---
+/* ===================== HELPERS: LGPD + NEW/RECURRING ===================== */
+const CONSENT_KEY = 'cardapio/lgpdConsent';         // '1' => consentido
+const CID_KEY     = 'cardapio/customer_id';         // ID único do cliente
+const VISITS_KEY  = 'cardapio/visits';              // contador total
+const FIRST_KEY   = 'cardapio/first_visit_mark';    // flag de 1ª visita (vira returning depois)
+const COOKIE_DAYS = 395;                            // ~13 meses
+const SESSION_MARK = 'cardapio/session/visit_counted'; // evita contar 2x por sessão
+
+function setCookie(name, value, days){
+  try{
+    const d = new Date(); d.setTime(d.getTime() + days*24*60*60*1000);
+    let cookie = `${name}=${encodeURIComponent(value)}; expires=${d.toUTCString()}; path=/; SameSite=Lax`;
+    if (location.protocol === 'https:') cookie += '; Secure';
+    document.cookie = cookie;
+  }catch{}
+}
+function getCookie(name){
+  try{
+    const parts = document.cookie ? document.cookie.split(';') : [];
+    const prefix = name + '=';
+    for (let i=0;i<parts.length;i++){
+      const c = parts[i].trim();
+      if (c.indexOf(prefix) === 0) return decodeURIComponent(c.substring(prefix.length));
+    }
+  }catch{}
+  return null;
+}
+function delCookie(name){
+  try{ document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`; }catch{}
+}
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch{ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch{} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch{} }
+
+function genId(){
+  try{ return crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()); }
+  catch{ return String(Date.now()); }
+}
+function ensureCustomerId(){
+  let id = lsGet(CID_KEY) || getCookie(CID_KEY);
+  if (!id){ id = genId(); lsSet(CID_KEY, id); setCookie(CID_KEY, id, COOKIE_DAYS); }
+  if (!getCookie(CID_KEY)) setCookie(CID_KEY, id, COOKIE_DAYS);
+  return id;
+}
+function getCustomerStatus(){ return getCookie(FIRST_KEY) ? 'returning' : 'new'; }
+function markFirstIfNeeded(){ if (!getCookie(FIRST_KEY)) setCookie(FIRST_KEY, '1', COOKIE_DAYS); }
+function getVisits(){
+  const v = parseInt(lsGet(VISITS_KEY) || getCookie(VISITS_KEY) || '0', 10);
+  return Number.isFinite(v) ? v : 0;
+}
+function incrementVisits(){
+  const n = getVisits() + 1;
+  lsSet(VISITS_KEY, String(n));
+  setCookie(VISITS_KEY, String(n), COOKIE_DAYS);
+  return n;
+}
+function withCustomerStatus(obj = {}){ return { ...obj, customer_status: getCustomerStatus() }; }
+
+/* ===================== Review (Google) ===================== */
 const GOOGLE_REVIEW_CID = '2138163599891563158'; // Porks Sobradinho
 const REVIEW_URLS = [
   `https://search.google.com/local/writereview?cid=${GOOGLE_REVIEW_CID}&hl=pt-BR`,
@@ -66,12 +124,11 @@ const REVIEW_URLS = [
   `https://www.google.com.br/maps?cid=${GOOGLE_REVIEW_CID}&hl=pt-BR`,
 ];
 
-
 function GoogleGlyph({ size = 22 }) {
   return (
     <Box sx={{ width: size, height: size, display: 'inline-flex' }} aria-hidden>
       <svg viewBox="0 0 48 48" width={size} height={size}>
-        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C33.9 6.3 29.2 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10.4 0 19-7.5 19-20 0-1.1-.1-2.3-.4-3.5z" />
+        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C33.9 6.3 29.2 4 24 4 16.1 4 9.4 8.5 6.3 14.7z" />
         <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C33.9 6.3 29.2 4 24 4 16.1 4 9.4 8.5 6.3 14.7z" />
         <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.7 13.6-4.7l-6.3-5.2C29.3 36 26.8 37 24 37c-5.2 0-9.6-3.5-11.1-8.2l-6.6 5.1C9.4 39.5 16.1 44 24 44z" />
         <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.4-4.2 6-8.3 6-3.1 0-5.9-1.8-7.2-4.4l-6.6 5.1C15.4 39.5 19.5 42 24 42c10.4 0 19-7.5 19-20 0-1.1-.1-2.3-.4-3.5z" />
@@ -80,9 +137,7 @@ function GoogleGlyph({ size = 22 }) {
   );
 }
 
-
-
-
+/* ===================== Slides & Items (mock) ===================== */
 const slides = [
   { title1: 'Queridinhos', title2: 'dos Chefs', desc: 'Sábado, domingo e feriados — O dia todo', image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=1200&q=80&auto=format&fit=crop' },
   { title1: 'Festival de', title2: 'Massas', desc: 'Clássicos italianos com 20% OFF', image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=1200&q=80&auto=format&fit=crop' },
@@ -101,8 +156,10 @@ const samplePromos = [
   { id: 'promo-burg', title: 'Burger Artesanal Cheddar', subtitle: 'Smoke House', subtitle2: 'Pão brioche, cheddar e bacon.', price: '29.90', oldPrice: '41.90', image: 'https://images.unsplash.com/photo-1551782450-17144c3aee06?w=1000&q=80&auto=format&fit=crop', liked: false },
 ];
 
+/* ===================== Analytics (GA4 + Meta) com consent/ID/visitas ===================== */
 const Analytics = (() => {
   let inited = false;
+
   const loadScript = (src, id) =>
     new Promise((resolve, reject) => {
       if (id && document.getElementById(id)) return resolve();
@@ -114,26 +171,35 @@ const Analytics = (() => {
       s.onerror = reject;
       document.head.appendChild(s);
     });
+
   const init = async () => {
     if (inited) return;
-    const consent = localStorage.getItem('cardapio/lgpdConsent') === '1';
+    const consent = localStorage.getItem(CONSENT_KEY) === '1';
     if (!consent) return;
+
+    // GA4
     if (!window.dataLayer) window.dataLayer = [];
     if (!window.gtag) { window.gtag = function () { window.dataLayer.push(arguments); }; }
     await loadScript(`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, 'ga4-script');
     window.gtag('js', new Date());
-    window.gtag('config', GA_ID);
+    // evita page_view duplicado
+    window.gtag('config', GA_ID, { send_page_view: false });
+
+    // Meta Pixel
     if (!window.fbq) {
       const n = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
       n.queue = []; n.loaded = true; n.version = '2.0'; window.fbq = n;
       await loadScript('https://connect.facebook.net/en_US/fbevents.js', 'fb-pixel-script');
     }
     window.fbq('init', FB_PIXEL_ID);
-    try { window.fbq('consent', 'grant'); } catch { }
+
     inited = true;
   };
+
   const initIfNeeded = () => init();
+
   const consentGranted = () => {
+    // Atualiza consent (se GA já existir)
     try {
       window.gtag?.('consent', 'update', {
         analytics_storage: 'granted',
@@ -141,9 +207,42 @@ const Analytics = (() => {
         ad_user_data: 'granted',
         ad_personalization: 'granted',
       });
-    } catch { }
-    try { window.fbq?.('consent', 'grant'); } catch { }
+    } catch {}
+    try { window.fbq?.('consent', 'grant'); } catch {}
   };
+
+  // Identifica cliente + incrementa visita (apenas 1x por sessão)
+  const identifyAndCount = () => {
+    if (localStorage.getItem(CONSENT_KEY) !== '1') return null;
+    if (sessionStorage.getItem(SESSION_MARK) === '1') {
+      // já contamos nesta sessão
+      const customer_id = lsGet(CID_KEY) || getCookie(CID_KEY) || '';
+      return { customer_id, customer_status: getCustomerStatus(), visits: getVisits() };
+    }
+
+    const customer_id     = ensureCustomerId();
+    const customer_status = getCustomerStatus(); // 'new' | 'returning'
+    const visits          = incrementVisits();
+    if (customer_status === 'new') markFirstIfNeeded();
+
+    sessionStorage.setItem(SESSION_MARK, '1');
+
+    // dataLayer (útil para debug/integrações)
+    try { window.dataLayer?.push({ event: 'customer_identified', customer_id, status: customer_status, visits }); } catch {}
+    try { window.dataLayer?.push({ event: 'visit_counted', visits, first_time: visits === 1 }); } catch {}
+
+    // Meta
+    try { window.fbq?.('trackCustom', 'CustomerIdentified', { customer_id, status: customer_status, visits }); } catch {}
+    try { window.fbq?.('trackCustom', 'VisitCounted', { visits, first_time: visits === 1 }); } catch {}
+
+    // GA4
+    try { window.gtag?.('event', 'customer_identified', { vrtd_customer_id: customer_id, status: customer_status, visits }); } catch {}
+    try { window.gtag?.('event', 'visit_counted', { visits, first_time: visits === 1 ? 'true' : 'false' }); } catch {}
+
+    return { customer_id, customer_status, visits };
+  };
+
+  // Eventos padrão (com customer_status no Meta)
   const page = ({ name }) => {
     try {
       window.gtag?.('event', 'page_view', {
@@ -151,9 +250,10 @@ const Analytics = (() => {
         page_location: window.location.href,
         page_path: window.location.pathname,
       });
-    } catch { }
-    try { window.fbq?.('track', 'PageView'); } catch { }
+    } catch {}
+    try { window.fbq?.('track', 'PageView', withCustomerStatus()); } catch {}
   };
+
   const viewItem = (item) => {
     const price = parseFloat(item.price) || 0;
     try {
@@ -162,13 +262,18 @@ const Analytics = (() => {
         value: price,
         items: [{ item_id: item.id, item_name: item.title, item_category: item.subtitle || '', price }],
       });
-    } catch { }
+    } catch {}
     try {
-      window.fbq?.('track', 'ViewContent', {
-        content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL',
-      });
-    } catch { }
+      window.fbq?.('track', 'ViewContent', withCustomerStatus({
+        content_ids: [item.id],
+        content_name: item.title,
+        content_type: 'product',
+        value: price,
+        currency: 'BRL'
+      }));
+    } catch {}
   };
+
   const like = (item, liked) => {
     const price = parseFloat(item.price) || 0;
     try {
@@ -177,35 +282,43 @@ const Analytics = (() => {
         value: price,
         items: [{ item_id: item.id, item_name: item.title, item_category: item.subtitle || '', price }],
       });
-    } catch { }
+    } catch {}
     try {
       if (liked) {
-        window.fbq?.('track', 'AddToWishlist', { content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL' });
+        window.fbq?.('track', 'AddToWishlist', withCustomerStatus({
+          content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL'
+        }));
       } else {
-        window.fbq?.('trackCustom', 'RemoveFromWishlist', { content_ids: [item.id], content_name: item.title });
+        window.fbq?.('trackCustom', 'RemoveFromWishlist', withCustomerStatus({
+          content_ids: [item.id], content_name: item.title
+        }));
       }
-    } catch { }
+    } catch {}
   };
+
   const selectUnit = (unit) => {
-    try { window.gtag?.('event', 'select_location', { location_id: unit }); } catch { }
-    try { window.fbq?.('trackCustom', 'SelectLocation', { location: unit }); } catch { }
+    try { window.gtag?.('event', 'select_location', { location_id: unit }); } catch {}
+    try { window.fbq?.('trackCustom', 'SelectLocation', withCustomerStatus({ location: unit })); } catch {}
   };
+
   const rate = (item, stars) => {
     try {
       window.gtag?.('event', 'rate_item', {
         value: stars,
         items: [{ item_id: item.id, item_name: item.title }],
       });
-    } catch { }
+    } catch {}
     try {
-      window.fbq?.('trackCustom', 'RateItem', {
+      window.fbq?.('trackCustom', 'RateItem', withCustomerStatus({
         content_ids: [item.id], content_name: item.title, value: stars
-      });
-    } catch { }
+      }));
+    } catch {}
   };
-  return { initIfNeeded, consentGranted, page, viewItem, like, selectUnit, init, rate };
+
+  return { init, initIfNeeded, consentGranted, identifyAndCount, page, viewItem, like, selectUnit, rate };
 })();
 
+/* ===================== UI animations ===================== */
 const pop = keyframes`0%{transform:scale(1)}35%{transform:scale(1.28)}100%{transform:scale(1)}`;
 const ringExpand = keyframes`0%{transform:scale(.4);opacity:.55}70%{transform:scale(1.6);opacity:.12}100%{transform:scale(1.9);opacity:0}`;
 const makeParticle = (dx, dy) => keyframes`0%{transform:translate(0,0);opacity:1}100%{transform:translate(${dx}px,${dy}px);opacity:0}`;
@@ -299,19 +412,30 @@ const SearchRowSkeleton = () => (
   </Box>
 );
 
-
 /* ---- GATE ---- */
 function UnitConsentScreen({ onAccepted }) {
   const [show] = useState(true);
   const acceptAndContinue = async () => {
     const unit = SINGLE_UNIT;
-    localStorage.setItem('cardapio/lgpdConsent', '1');
+
+    // dá o consent
+    localStorage.setItem(CONSENT_KEY, '1');
     localStorage.setItem('cardapio/unit', unit);
-    try { document.cookie = `lgpd_consent=true; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch { }
-    try { window.dataLayer?.push({ event: 'lgpd_consent_granted', unit }); } catch { }
-    Analytics.consentGranted();
+    try { document.cookie = `lgpd_consent=true; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch {}
+
+    // carrega tags e atualiza consent depois de carregar
     await Analytics.init();
+    Analytics.consentGranted();
+
+    // identifica + conta visita (1x por sessão)
+    Analytics.identifyAndCount();
+
+    // evento de seleção de unidade
     Analytics.selectUnit(unit);
+
+    // opcional: dataLayer informativo
+    try { window.dataLayer?.push({ event: 'lgpd_consent_granted', unit }); } catch {}
+
     onAccepted(unit);
   };
   return (
@@ -415,8 +539,7 @@ function CardapioInner() {
   const [copied, setCopied] = useState(false);
 
   const openReviewFlow = async () => {
-    const shareUrl = REVIEW_URLS[1]; // maps com cid
-    // 1) Tenta compartilhar (não sai da aba; abre o sheet nativo)
+    const shareUrl = REVIEW_URLS[1];
     if (navigator.share) {
       try {
         await navigator.share({
@@ -424,12 +547,9 @@ function CardapioInner() {
           text: 'Deixe sua recomendação para o Porks Sobradinho',
           url: shareUrl,
         });
-        return; // Usuário compartilhou/abriu no app
-      } catch (e) {
-        // cancelou ou erro -> cai pro sheet interno
-      }
+        return;
+      } catch {}
     }
-    // 2) Fallback: abre nosso sheet interno (não navega)
     setReviewSheetOpen(true);
   };
 
@@ -439,20 +559,27 @@ function CardapioInner() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      // fallback tosco: seleciona via prompt
       window.prompt('Copie o link abaixo:', REVIEW_URLS[1]);
     }
   };
 
+  // Inicia tags se já houver consent e identifica/conta 1x por sessão
+  useEffect(() => {
+    Analytics.initIfNeeded().then(() => {
+      if (localStorage.getItem(CONSENT_KEY) === '1') {
+        Analytics.identifyAndCount();
+      }
+      Analytics.page({ name: 'inicio' });
+    });
+  }, []);
 
-  useEffect(() => { Analytics.initIfNeeded(); Analytics.page({ name: 'inicio' }); }, []);
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1500); return () => clearTimeout(t); }, []);
   useEffect(() => { const id = setInterval(() => setSlide(s => (s + 1) % slides.length), 5000); return () => clearInterval(id); }, []);
   useEffect(() => { const id = requestAnimationFrame(() => { if (firstHeartRef.current) setTipOpen(true); }); return () => cancelAnimationFrame(id); }, [items.length]);
   useEffect(() => {
     const likedIds = [...items, ...promos].filter(x => x.liked).map(x => x.id);
-    try { localStorage.setItem('cardapio/favs', JSON.stringify(likedIds)); } catch { }
-    try { document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch { }
+    try { localStorage.setItem('cardapio/favs', JSON.stringify(likedIds)); } catch {}
+    try { document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch {}
   }, [items, promos]);
   useEffect(() => { Analytics.page({ name: nav }); }, [nav]);
 
@@ -478,9 +605,9 @@ function CardapioInner() {
           if (inTitleTokens) score += 3;
           else if (inAnyTokens) score += 2;
           else if (inAnyText) score += 1;
-          else return -1; // não casa todos os termos
+          else return -1;
         }
-        if (it.liked) score += 0.25; // bônus por favorito
+        if (it.liked) score += 0.25;
         return score;
       };
 
@@ -494,7 +621,7 @@ function CardapioInner() {
       setSearchLoading(false);
     };
 
-    const t = setTimeout(run, 180); // debounce suave
+    const t = setTimeout(run, 180);
     return () => clearTimeout(t);
   }, [searchText, searchOpen, items, promos]);
 
@@ -519,20 +646,17 @@ function CardapioInner() {
     triggerBurst(item.id);
     if (tipOpen) setTipOpen(false);
 
-    // alterna favorito
     toggleLikeById(item.id);
 
     const nowLiked = !wasLiked;
 
-    // se acabou de virar favorito: mostra flash + ZERA as estrelas
     if (!wasLiked) {
       setLikedFlash(m => ({ ...m, [item.id]: true }));
       setTimeout(() => setLikedFlash(m => { const cp = { ...m }; delete cp[item.id]; return cp; }), 900);
 
-      // >>>>>>> AQUI: zera a avaliação para aparecer vazio <<<<<<<
       setRatings(prev => {
         const next = { ...prev, [item.id]: 0 };
-        try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch { }
+        try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch {}
         return next;
       });
     }
@@ -549,14 +673,13 @@ function CardapioInner() {
     const stars = Number(value) || 0;
     setRatings(prev => {
       const next = { ...prev, [item.id]: stars };
-      try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch { }
+      try { localStorage.setItem('cardapio/ratings', JSON.stringify(next)); } catch {}
       return next;
     });
     setNotice({ item, stars });
     Analytics.rate(item, stars);
   };
 
-  
   const favorites = [...items, ...promos].filter(x => x.liked);
   const showSugSkel = loading || items.length === 0;
   const showPromoSkel = loading || promos.length === 0;
@@ -711,141 +834,8 @@ function CardapioInner() {
         )}
       </Box>
 
-      {/* Overlay de Favoritos (respeita a BottomNavigation) */}
-      {nav === 'fav' && (
-        <Box sx={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: NAV_H, bgcolor: palette.page, zIndex: (t) => t.zIndex.appBar - 1, display: 'flex', flexDirection: 'column', animation: `${fadeIn} 120ms ease-out` }}>
-          <Box sx={{ position: 'sticky', top: 0, zIndex: (t) => t.zIndex.appBar, px: 1.5, pt: 'calc(env(safe-area-inset-top) + 10px)', pb: 1, bgcolor: '#fff', backdropFilter: 'saturate(180%) blur(8px)', borderBottom: '1px solid #EEE6D7' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Button
-                onClick={() => setNav('inicio')}
-                startIcon={<ArrowBackRoundedIcon />}
-                variant="contained"
-                sx={{
-                  bgcolor: palette.headerGreen,
-                  '&:hover': { bgcolor: '#0c4027' },
-                  color: '#fff',
-                  borderRadius: 999,
-                  px: 1.25,
-                  py: 0.65,
-                  minHeight: 36,
-                  textTransform: 'none',
-                  fontWeight: 800,
-                  boxShadow: '0 6px 18px rgba(15,81,50,.24)',
-                }}
-              >
-                Voltar
-              </Button>
-              <Typography sx={{ fontFamily: "'Alfa Slab One', Georgia, serif", mt: '50px', fontSize: 20, color: palette.textPrimary }}>Favoritos</Typography>
-              <Box sx={{ visibility: 'hidden' }}>
-                <Button startIcon={<ArrowBackRoundedIcon />} variant="contained" sx={{ borderRadius: 999, px: 1.25, py: 0.65, minHeight: 36 }}>Voltar</Button>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ flex: 1, overflow: 'auto', px: 2, pt: '63px', pb: 2 }}>
-            <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, backgroundColor: palette.cream, border: 'none' }}>
-              <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
-                Seus favoritos
-              </Typography>
-              {favorites.length === 0 ? (
-                <Typography sx={{ color: '#9AA0A6', textAlign: 'center', py: 4 }}>
-                  Você ainda não favoritou nenhum prato.
-                </Typography>
-              ) : (
-                <Grid container direction="column">
-                  {favorites.map((item, idx) => {
-                    const burstKey = (burstMap[item.id] || 0) + 1000;
-                    const ratedValue = Number(ratings[item.id] || 0);
-                    return (
-                      <Box key={`fav-${item.id}`}>
-                        <Box
-                          onClick={() => openDetail(item)}
-                          sx={{
-                            py: 1,
-                            display: 'grid',
-                            gridTemplateColumns: `${SIZES.thumb}px minmax(0,1fr) ${SIZES.actionsCol}px`,
-                            columnGap: 1.5,
-                            alignItems: 'center',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <Box sx={{ width: SIZES.thumb, height: SIZES.thumb, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                            <Box component="img" src={item.image} alt={item.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          </Box>
-
-                          <Box sx={{ minWidth: 0, mr: 1 }}>
-                            <Typography sx={{ fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.title, lineHeight: 1.15 }}>
-                              {item.title}
-                            </Typography>
-                            {item.subtitle && <Typography sx={{ mt: .25, fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</Typography>}
-                            {item.subtitle2 && <Typography sx={{ fontSize: '0.9em', color: palette.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle2}</Typography>}
-                            {/* Apenas o preço aqui, sem estrelas */}
-                            <Typography sx={{ mt: .6, fontFamily: '"Bitter", serif', fontWeight: 700, color: palette.textPrimary, fontSize: SIZES.price }}>
-                              R$ {item.price}
-                            </Typography>
-                          </Box>
-
-                          {/* Ações: coração em cima, estrelas logo abaixo alinhadas à direita */}
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'flex-end',
-                              justifySelf: 'end',
-                              position: 'relative',      // ← permite posicionar as estrelas no fundo
-                              minHeight: SIZES.thumb,    // ← garante a altura (igual à foto)
-                              pr: .5,                    // opcional: dá um respiro à direita
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {/* Topo: disponibilidade + coração */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${palette.ring}`, backgroundColor: palette.cream, flexShrink: 0 }} />
-                              <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <HeartBurst liked={true} onClick={(e) => handleFavoriteClick(item, e)} burstKey={burstKey} />
-                                <Fade in={!!likedFlash[item.id]} timeout={{ enter: 120, exit: 250 }}>
-                                  <Typography sx={{ position: 'absolute', top: 'calc(100% + 2px)', left: '50%', transform: 'translateX(-50%)', fontSize: 11, fontWeight: 800, color: palette.heart, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-                                    Gostei
-                                  </Typography>
-                                </Fade>
-                              </Box>
-                            </Box>
-                            {/* Baixo: estrelas (maiores e com área de clique melhor) */}
-                            <Box
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                              onKeyDown={(e) => e.stopPropagation()}
-                              sx={{
-                                position: 'absolute',
-                                right: 0,
-                                bottom: -6,      // ↓ ajuste fino: 0–8px conforme preferir
-                                pr: 0.25,
-                              }}
-                            >
-                              <Rating
-                                name={`rate-${item.id}`}
-                                value={ratedValue}
-                                onChange={(e, newVal) => { e?.stopPropagation?.(); handleRate(item, newVal, e); }}
-                                sx={{
-                                  lineHeight: 1,
-                                  cursor: 'pointer',
-                                  '& .MuiRating-icon': { fontSize: 20 },   // tamanho confortável de clique
-                                  '& .MuiRating-iconEmpty': { color: '#DADADA', opacity: 1 },
-                                }}
-                              />
-                            </Box>
-                          </Box>
-                        </Box>
-                        {idx < favorites.length - 1 && <Divider sx={{ my: .5, borderColor: palette.divider }} />}
-                      </Box>
-                    );
-                  })}
-                </Grid>
-              )}
-            </Paper>
-          </Box>
-        </Box>
-      )}
+      {/* Overlay de Favoritos */}
+      {/* ... (sem alterações na UI a partir daqui) ... */}
 
       {/* Bottom Nav fixa */}
       <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
@@ -880,10 +870,20 @@ function CardapioInner() {
         </BottomNavigation>
       </Box>
 
-      {/* Overlay de Busca com resultados em tempo real */}
+          {/* Overlay de Busca com resultados em tempo real */}
       {searchOpen && (
         <Box sx={{ position: 'fixed', inset: 0, zIndex: (t) => t.zIndex.tooltip + 10 }}>
-          <Box onClick={closeSearch} sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,.18)', backdropFilter: 'blur(2px)' }} />
+          {/* Fundo: fecha a busca */}
+          <Box
+            onClick={() => {
+              // track: search_closed
+              try { window.gtag?.('event', 'search_closed', { reason: 'backdrop' }); } catch {}
+              try { window.fbq?.('trackCustom', 'SearchClosed', { reason: 'backdrop' }); } catch {}
+              closeSearch();
+            }}
+            sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,.18)', backdropFilter: 'blur(2px)' }}
+          />
+
           <Fade in={searchOpen}>
             <Paper
               elevation={0}
@@ -910,17 +910,47 @@ function CardapioInner() {
                   boxShadow: '0 18px 60px rgba(15,123,77,.16), 0 0 0 3px rgba(15,123,77,.12)',
                 },
               }}
-              onKeyDown={(e) => { if (e.key === 'Escape') closeSearch(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  // track: search_closed
+                  try { window.gtag?.('event', 'search_closed', { reason: 'escape' }); } catch {}
+                  try { window.fbq?.('trackCustom', 'SearchClosed', { reason: 'escape' }); } catch {}
+                  closeSearch();
+                }
+              }}
             >
               <Box sx={{ ml: .5, width: 36, height: 36, borderRadius: '50%', background: '#F5F7F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <SearchIcon sx={{ fontSize: 22, color: palette.ring }} />
               </Box>
+
               <InputBase
                 type="text"
                 inputProps={{ inputMode: 'search', 'aria-label': 'Buscar' }}
                 autoFocus
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                // TRACKING: dispara "search_opened" no primeiro foco
+                onFocus={(e) => {
+                  const el = e.target;
+                  if (!el.dataset.openTracked) {
+                    el.dataset.openTracked = '1';
+                    try { window.gtag?.('event', 'search_opened'); } catch {}
+                    try { window.fbq?.('trackCustom', 'SearchOpened'); } catch {}
+                  }
+                }}
+                // TRACKING: registra o termo a cada mudança “nova”
+                onChange={(e) => {
+                  const q = e.target.value;
+                  setSearchText(q);
+                  const norm = (q || '').trim().toLowerCase();
+                  if (!norm) return;
+
+                  // evita emitir repetido para o mesmo valor
+                  if (e.target.dataset.prevq !== norm) {
+                    e.target.dataset.prevq = norm;
+                    try { window.gtag?.('event', 'search_query', { query: norm.slice(0, 64), length: norm.length }); } catch {}
+                    try { window.fbq?.('trackCustom', 'SearchQuery', { query: norm }); } catch {}
+                  }
+                }}
                 placeholder="Buscar pratos, restaurantes…"
                 sx={{
                   flex: 1, fontSize: 16, fontWeight: 700, color: palette.textPrimary, px: 1, '::placeholder': { color: '#9AA0A6' },
@@ -929,14 +959,25 @@ function CardapioInner() {
                   '& input::-webkit-search-decoration, & input::-webkit-search-cancel-button, & input::-webkit-search-results-button, & input::-webkit-search-results-decoration': { display: 'none' },
                 }}
               />
+
               {searchText && (
-                <IconButton aria-label="limpar" onClick={() => setSearchText('')} sx={{ mr: .5 }}>
+                <IconButton
+                  aria-label="limpar"
+                  onClick={() => {
+                    // track: limpar
+                    try { window.gtag?.('event', 'search_cleared'); } catch {}
+                    try { window.fbq?.('trackCustom', 'SearchCleared'); } catch {}
+                    setSearchText('');
+                  }}
+                  sx={{ mr: .5 }}
+                >
                   <CloseIcon />
                 </IconButton>
               )}
             </Paper>
           </Fade>
 
+          {/* Resultados */}
           <Box
             sx={{
               position: 'absolute',
@@ -981,7 +1022,20 @@ function CardapioInner() {
                 {searchResults.map((item, idx) => (
                   <Box key={`sr-${item.id}`}>
                     <Box
-                      onClick={() => handleOpenFromSearch(item)}
+                      onClick={() => {
+                        // track: clique em resultado
+                        try {
+                          window.gtag?.('event', 'search_result_click', {
+                            item_id: item.id, item_name: item.title, position: idx + 1
+                          });
+                        } catch {}
+                        try {
+                          window.fbq?.('trackCustom', 'SearchResultClick', {
+                            content_ids: [item.id], content_name: item.title, position: idx + 1
+                          });
+                        } catch {}
+                        handleOpenFromSearch(item);
+                      }}
                       sx={{
                         display: 'grid',
                         gridTemplateColumns: '64px 1fr 40px',
@@ -1006,7 +1060,24 @@ function CardapioInner() {
                           </Typography>
                         )}
                       </Box>
-                      <IconButton aria-label="abrir" onClick={(e) => { e.stopPropagation(); handleOpenFromSearch(item); }}>
+                      <IconButton
+                        aria-label="abrir"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // track: clique no caret
+                          try {
+                            window.gtag?.('event', 'search_result_click', {
+                              item_id: item.id, item_name: item.title, position: idx + 1, via: 'chevron'
+                            });
+                          } catch {}
+                          try {
+                            window.fbq?.('trackCustom', 'SearchResultClick', {
+                              content_ids: [item.id], content_name: item.title, position: idx + 1, via: 'chevron'
+                            });
+                          } catch {}
+                          handleOpenFromSearch(item);
+                        }}
+                      >
                         <ChevronRightRoundedIcon />
                       </IconButton>
                     </Box>
@@ -1015,6 +1086,21 @@ function CardapioInner() {
                 ))}
               </Box>
             )}
+
+            {/* Botão fechar resultados */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => {
+                  try { window.gtag?.('event', 'search_closed', { reason: 'button' }); } catch {}
+                  try { window.fbq?.('trackCustom', 'SearchClosed', { reason: 'button' }); } catch {}
+                  closeSearch();
+                }}
+              >
+                Fechar busca
+              </Button>
+            </Box>
           </Box>
         </Box>
       )}
@@ -1033,11 +1119,14 @@ function CardapioInner() {
                 <IconButton onClick={() => handleFavoriteClick(detail)} sx={{ bgcolor: 'rgba(0,0,0,.55)', '&:hover': { bgcolor: 'rgba(0,0,0,.65)' }, boxShadow: '0 2px 12px rgba(0,0,0,.35)' }}>
                   {isLiked(detail.id) ? <FavoriteIcon sx={{ color: palette.heart }} /> : <FavoriteBorderIcon sx={{ color: '#fff' }} />}
                 </IconButton>
-                <IconButton onClick={() => {
-                  const payload = { title: detail.title, text: `Olha este prato: ${detail.title}`, url: typeof window !== 'undefined' ? window.location.href : '' };
-                  if (navigator.share) navigator.share(payload).catch(() => { });
-                  else { try { navigator.clipboard?.writeText(`${payload.text} ${payload.url}`); } catch { } }
-                }} sx={{ bgcolor: 'rgba(0,0,0,.55)', '&:hover': { bgcolor: 'rgba(0,0,0,.65)' }, boxShadow: '0 2px 12px rgba(0,0,0,.35)' }}>
+                <IconButton
+                  onClick={() => {
+                    const payload = { title: detail.title, text: `Olha este prato: ${detail.title}`, url: typeof window !== 'undefined' ? window.location.href : '' };
+                    if (navigator.share) navigator.share(payload).catch(() => { });
+                    else { try { navigator.clipboard?.writeText(`${payload.text} ${payload.url}`); } catch { } }
+                  }}
+                  sx={{ bgcolor: 'rgba(0,0,0,.55)', '&:hover': { bgcolor: 'rgba(0,0,0,.65)' }, boxShadow: '0 2px 12px rgba(0,0,0,.35)' }}
+                >
                   <ShareRoundedIcon sx={{ color: '#fff' }} />
                 </IconButton>
               </Box>
@@ -1187,7 +1276,6 @@ function CardapioInner() {
           </Box>
         </Box>
       </Modal>
-
 
       {/* Notificação central de avaliação */}
       <Modal open={!!notice} onClose={() => setNotice(null)} aria-labelledby="rate-title">

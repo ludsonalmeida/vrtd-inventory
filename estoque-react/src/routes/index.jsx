@@ -47,7 +47,7 @@ export default function AppRoutes() {
         {/* Página inicial pública */}
         <Route path="/" element={<><HomePage /><Footer /></>} />
         {/* Página de Cardápio pública, sem layout extra */}
-        <Route path="/cardapio" element={<CardapioPage />} />
+        <Route path="/cardapio" element={<CardapioLayout />} />
         <Route path="/cardapio-lay" element={<CardapioLayout />} />
         <Route path="/clubedochope" element={<SignUpCard />} />
         <Route path="/politicas-de-privacidade" element={<LGPD />} />
