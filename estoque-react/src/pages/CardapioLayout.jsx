@@ -605,11 +605,10 @@ function CardapioInner() {
 
   useEffect(() => {
     if (!detail) return;
-    if (lastTrackedIdRef.current === detail.id) return; // evita disparo duplicado
-
-    Analytics.viewItem(detail);   // dispara Meta Pixel + GA
-    lastTrackedIdRef.current = detail.id;
+    Analytics.viewItem(detail);   // dispara SEMPRE que abre o detalhe
   }, [detail]);
+
+  
   // Corrige automaticamente se o localStorage estiver com "Águas Claras"
   useEffect(() => {
     const u = localStorage.getItem('cardapio/unit');
