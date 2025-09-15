@@ -205,7 +205,13 @@ const Analytics = (() => {
     } catch { }
     try {
       window.fbq?.('track', 'ViewContent', {
-        content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL',
+        content_ids: [item.id],
+        content_name: item.title,
+        content_type: 'product',
+        value: price,
+        currency: 'BRL',
+        // opcionalmente, envie a categoria textual se tiver:
+        content_category: item.subtitle || '',
       });
     } catch { }
   };
@@ -594,6 +600,16 @@ function CardapioInner() {
   };
 
   useEffect(() => { Analytics.initIfNeeded(); Analytics.page({ name: 'inicio' }); }, []);
+
+  const lastTrackedIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!detail) return;
+    if (lastTrackedIdRef.current === detail.id) return; // evita disparo duplicado
+
+    Analytics.viewItem(detail);   // dispara Meta Pixel + GA
+    lastTrackedIdRef.current = detail.id;
+  }, [detail]);
   // Corrige automaticamente se o localStorage estiver com "Águas Claras"
   useEffect(() => {
     const u = localStorage.getItem('cardapio/unit');
@@ -717,13 +733,14 @@ function CardapioInner() {
       setNav(prevNavRef.current || 'inicio'); // volta para a listagem
     }
   };
-  const openDetail = (it) => { setDetail(it); Analytics.viewItem(it); };
+  const openDetail = (it) => { setDetail(it); };
   const closeDetail = () => {
     setDetail(null);
     if (nav === 'busca') {
       setNav(prevNavRef.current || 'inicio'); // segurança extra
     }
   };
+
 
   const forceUnitSobradinho = () => {
     localStorage.setItem('cardapio/unit', SINGLE_UNIT);
