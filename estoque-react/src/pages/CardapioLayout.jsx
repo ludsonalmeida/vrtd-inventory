@@ -143,6 +143,35 @@ const slides = [
 
 const Analytics = (() => {
   let inited = false;
+  let ready = false;
+  const queue = [];
+
+  const run = (fn) => {
+    if (ready) {
+      try { fn(); } catch { }
+    } else {
+      queue.push(fn);
+    }
+  };
+  const flush = () => {
+    ready = true;
+    while (queue.length) {
+      const fn = queue.shift();
+      try { fn(); } catch { }
+    }
+  };
+
+  // ---- stubs adiantados (evita perder eventos antes do init) ----
+  if (!window.dataLayer) window.dataLayer = [];
+  if (!window.gtag) window.gtag = function () { window.dataLayer.push(arguments); };
+
+  if (!window.fbq) {
+    const n = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+    n.queue = []; n.loaded = true; n.version = '2.0'; n.push = n;
+    window.fbq = n;
+    window._fbq = n;
+  }
+
   const loadScript = (src, id) =>
     new Promise((resolve, reject) => {
       if (id && document.getElementById(id)) return resolve();
@@ -154,65 +183,58 @@ const Analytics = (() => {
       s.onerror = reject;
       document.head.appendChild(s);
     });
+
   const init = async () => {
     if (inited) return;
     const consent = localStorage.getItem('cardapio/lgpdConsent') === '1';
     if (!consent) return;
-    if (!window.dataLayer) window.dataLayer = [];
-    if (!window.gtag) { window.gtag = function () { window.dataLayer.push(arguments); }; }
+
+    // GA4
     await loadScript(`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, 'ga4-script');
     window.gtag('js', new Date());
     window.gtag('config', GA_ID);
 
-    if (!window.fbq) {
-      const n = function () {
-        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-      };
-      n.queue = [];
-      n.loaded = true;
-      n.version = '2.0';
-      n.push = n;        // ✅ importante
-      window.fbq = n;
-      window._fbq = n;   // ✅ compat/depuração
-      await loadScript('https://connect.facebook.net/en_US/fbevents.js', 'fb-pixel-script');
-    }
+    // Pixel
+    await loadScript('https://connect.facebook.net/en_US/fbevents.js', 'fb-pixel-script');
     window.fbq('init', FB_PIXEL_ID);
-    try { window.fbq?.('consent', 'grant'); } catch { }
+    try { window.fbq('consent', 'grant'); } catch { }
 
     inited = true;
+    flush(); // ✅ a partir daqui, tudo que estava na fila é enviado
   };
 
+  const initIfNeeded = () => { init(); };
 
-  const initIfNeeded = () => init();
   const consentGranted = () => {
     try {
-      window.gtag?.('consent', 'update', {
+      window.gtag('consent', 'update', {
         analytics_storage: 'granted',
         ad_storage: 'granted',
         ad_user_data: 'granted',
         ad_personalization: 'granted',
       });
     } catch { }
-    try { window.fbq?.('consent', 'grant'); } catch { }
+    try { window.fbq('consent', 'grant'); } catch { }
   };
+
   const page = ({ name }) => {
-    try {
-      window.gtag?.('event', 'page_view', {
+    run(() => {
+      window.gtag('event', 'page_view', {
         page_title: name,
         page_location: window.location.href,
         page_path: window.location.pathname,
       });
-    } catch { }
-    try { window.fbq?.('track', 'PageView'); } catch { }
+      window.fbq('track', 'PageView');
+    });
   };
 
+  // 🔁 SEMPRE dispara (com ID único) e nunca perde evento
   const viewItem = (item) => {
     const price = parseFloat(item.price) || 0;
     const eventID = `vc_${item.id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // GA4
-    try {
-      window.gtag?.('event', 'view_item', {
+    run(() => {
+      window.gtag('event', 'view_item', {
         currency: 'BRL',
         value: price,
         items: [{
@@ -221,13 +243,10 @@ const Analytics = (() => {
           item_category: item.subtitle || '',
           price
         }],
-        // 👇 garante unicidade pra desativar qualquer deduplicação a montante
         event_id: eventID,
       });
-    } catch { }
 
-    try {
-      window.fbq?.(
+      window.fbq(
         'track',
         'ViewContent',
         {
@@ -238,47 +257,53 @@ const Analytics = (() => {
           currency: 'BRL',
           content_category: item.subtitle || '',
         },
-        { eventID } // 👈 força evento único
+        { eventID }
       );
-    } catch { }
+    });
   };
-  
+
   const like = (item, liked) => {
     const price = parseFloat(item.price) || 0;
-    try {
-      window.gtag?.('event', liked ? 'add_to_wishlist' : 'remove_from_wishlist', {
+    run(() => {
+      window.gtag('event', liked ? 'add_to_wishlist' : 'remove_from_wishlist', {
         currency: 'BRL',
         value: price,
         items: [{ item_id: item.id, item_name: item.title, item_category: item.subtitle || '', price }],
       });
-    } catch { }
-    try {
       if (liked) {
-        window.fbq?.('track', 'AddToWishlist', { content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL' });
+        window.fbq('track', 'AddToWishlist', {
+          content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL'
+        });
       } else {
-        window.fbq?.('trackCustom', 'RemoveFromWishlist', { content_ids: [item.id], content_name: item.title });
+        window.fbq('trackCustom', 'RemoveFromWishlist', {
+          content_ids: [item.id], content_name: item.title
+        });
       }
-    } catch { }
+    });
   };
+
   const selectUnit = (unit) => {
-    try { window.gtag?.('event', 'select_location', { location_id: unit }); } catch { }
-    try { window.fbq?.('trackCustom', 'SelectLocation', { location: unit }); } catch { }
+    run(() => {
+      window.gtag('event', 'select_location', { location_id: unit });
+      window.fbq('trackCustom', 'SelectLocation', { location: unit });
+    });
   };
+
   const rate = (item, stars) => {
-    try {
-      window.gtag?.('event', 'rate_item', {
+    run(() => {
+      window.gtag('event', 'rate_item', {
         value: stars,
         items: [{ item_id: item.id, item_name: item.title }],
       });
-    } catch { }
-    try {
-      window.fbq?.('trackCustom', 'RateItem', {
+      window.fbq('trackCustom', 'RateItem', {
         content_ids: [item.id], content_name: item.title, value: stars
       });
-    } catch { }
+    });
   };
+
   return { initIfNeeded, consentGranted, page, viewItem, like, selectUnit, init, rate };
 })();
+
 
 const pop = keyframes`0%{transform:scale(1)}35%{transform:scale(1.28)}100%{transform:scale(1)}`;
 const makeParticle = (dx, dy) => keyframes`0%{transform:translate(0,0);opacity:1}100%{transform:translate(${dx}px,${dy}px);opacity:0}`;
