@@ -73,7 +73,7 @@ export const initialItems = [
     id: 'food-pork-burrito',
     categoryId: 'sanduiches',
     title: 'Pork Burrito',
-    subtitle: 'Sanduíches',
+    subtitle: 'Estilo Mexicano',
     subtitle2: 'Tortilla quentinha abraça pernil desfiado, cheddar derretido e sour cream—puro conforto em suas mãos.',
     price: '28.00',
     image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/porks-burrito.jpg',
@@ -458,17 +458,7 @@ export const initialDrinks = [
     image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/caipi-frutasv.jpg',
     liked: false,
   },
-  {
-    id: 'drink-caipi-estacao',
-    categoryId: 'caipis',
-    title: 'Caipi Estação',
-    subtitle: 'Caipis',
-    subtitle2: 'Fruta da estação.',
-    price: '25.00',
-    image: 'https://porks.nyc3.cdn.digitaloceanspaces.com/cardapio/caipi-estacao.jpg',
-    liked: false,
-  },
-
+  
   // === Vodka ===
   {
     id: 'drink-moscow-mule',
