@@ -163,15 +163,26 @@ const Analytics = (() => {
     await loadScript(`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, 'ga4-script');
     window.gtag('js', new Date());
     window.gtag('config', GA_ID);
+
     if (!window.fbq) {
-      const n = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-      n.queue = []; n.loaded = true; n.version = '2.0'; window.fbq = n;
+      const n = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      n.queue = [];
+      n.loaded = true;
+      n.version = '2.0';
+      n.push = n;        // ✅ importante
+      window.fbq = n;
+      window._fbq = n;   // ✅ compat/depuração
       await loadScript('https://connect.facebook.net/en_US/fbevents.js', 'fb-pixel-script');
     }
     window.fbq('init', FB_PIXEL_ID);
     try { window.fbq?.('consent', 'grant'); } catch { }
+
     inited = true;
   };
+
+
   const initIfNeeded = () => init();
   const consentGranted = () => {
     try {
@@ -194,6 +205,7 @@ const Analytics = (() => {
     } catch { }
     try { window.fbq?.('track', 'PageView'); } catch { }
   };
+
   const viewItem = (item) => {
     const price = parseFloat(item.price) || 0;
     try {
@@ -203,18 +215,23 @@ const Analytics = (() => {
         items: [{ item_id: item.id, item_name: item.title, item_category: item.subtitle || '', price }],
       });
     } catch { }
+
     try {
-      window.fbq?.('track', 'ViewContent', {
-        content_ids: [item.id],
-        content_name: item.title,
-        content_type: 'product',
-        value: price,
-        currency: 'BRL',
-        // opcionalmente, envie a categoria textual se tiver:
-        content_category: item.subtitle || '',
-      });
+      const eventID = `${item.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      window.fbq?.('track', 'ViewContent',
+        {
+          content_ids: [item.id],
+          content_name: item.title,
+          content_type: 'product',
+          value: price,
+          currency: 'BRL',
+          content_category: item.subtitle || '',
+        },
+        { eventID } // ✅ evita deduplicação
+      );
     } catch { }
   };
+  
   const like = (item, liked) => {
     const price = parseFloat(item.price) || 0;
     try {
@@ -603,12 +620,14 @@ function CardapioInner() {
 
   const lastTrackedIdRef = useRef(null);
 
-  useEffect(() => {
-    if (!detail) return;
-    Analytics.viewItem(detail);   // dispara SEMPRE que abre o detalhe
-  }, [detail]);
+  const openDetail = (it) => {
+    // dispara SEMPRE no clique
+    Analytics.viewItem(it);
 
-  
+    // força nova referência para garantir render/efeito visual
+    setDetail({ ...it, __openedAt: Date.now() });
+  };
+
   // Corrige automaticamente se o localStorage estiver com "Águas Claras"
   useEffect(() => {
     const u = localStorage.getItem('cardapio/unit');
@@ -732,7 +751,7 @@ function CardapioInner() {
       setNav(prevNavRef.current || 'inicio'); // volta para a listagem
     }
   };
-  const openDetail = (it) => { setDetail(it); };
+
   const closeDetail = () => {
     setDetail(null);
     if (nav === 'busca') {
