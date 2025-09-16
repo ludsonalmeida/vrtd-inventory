@@ -1,3 +1,4 @@
+// src/pages/CardapioLayout.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
@@ -20,7 +21,7 @@ import {
   Modal,
 } from '@mui/material';
 import { keyframes } from '@mui/system';
-
+import AcquisitionMachine from "../components/AcquisitionMachine";
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import LocalBarIcon from '@mui/icons-material/LocalBar';
 import SearchIcon from '@mui/icons-material/Search';
@@ -41,30 +42,24 @@ import {
   drinkCategories,
 } from '../data/menu_data_new.jsx';
 
-
 const palette = {
   page: '#FFFFFF',
   cream: '#FBF5E9',
   bannerRed: '#E6564F',
-  orange: '#EA5A47',       // 🔶 Novo: laranja principal
-  headerGreen: '#C63830',  // mantém pro resto do app
+  orange: '#EA5A47',
+  headerGreen: '#C63830',
   textPrimary: '#12100B',
   textMuted: '#7D8B84',
   divider: '#E8E0D3',
-  ring: '#EA5A47',         // 🔶 aqui já força o laranja no ícone
+  ring: '#EA5A47',
   heart: '#E05657',
   promoBg: '#FFE8E6',
   promoFg: '#C63830',
 };
 
-
 const SIZES = { thumb: 104, actionsCol: 44, actionsFav: 128, title: 16, price: 14.5 };
 const NAV_H = 'calc(64px + env(safe-area-inset-bottom))';
 const SINGLE_UNIT = 'Sobradinho, Distrito Federal';
-
-const GA_ID = import.meta.env?.VITE_GA_ID || 'G-XXXXXXXXXX';
-const FB_PIXEL_ID = import.meta.env?.VITE_FB_PIXEL_ID || '000000000000000';
-
 
 // --- Feature flag para Promoções ---
 function readPromosEnabled() {
@@ -118,192 +113,27 @@ const slides = [
     title1: 'Burger',
     title2: 'da Casa',
     desc: 'Blend suculento, cheddar e bacon crocante',
-    image: getImg('food-porks-bacon-burger'),        // burgers
+    image: getImg('food-porks-bacon-burger'),
   },
   {
     title1: 'Torresmo',
     title2: 'Mineiro',
     desc: 'Crocância perfeita pra acompanhar o chope',
-    image: getImg('food-torresmo-mineiro'),          // torresmos
+    image: getImg('food-torresmo-mineiro'),
   },
   {
     title1: 'Batata',
     title2: 'Tropeira',
     desc: 'Batata rústica, pernil desfiado e BBQ da casa',
-    image: getImg('food-batata-tropeira'),           // compartilhar
+    image: getImg('food-batata-tropeira'),
   },
   {
     title1: 'Drinks da Casa',
     title2: 'Moscow Mule',
     desc: 'Vodka, gengibre, limão e aquela espuma clássica',
-    image: getImg('drink-moscow-mule'),              // drinks
+    image: getImg('drink-moscow-mule'),
   },
 ];
-
-
-const Analytics = (() => {
-  let inited = false;
-  let ready = false;
-  const queue = [];
-
-  const run = (fn) => {
-    if (ready) {
-      try { fn(); } catch { }
-    } else {
-      queue.push(fn);
-    }
-  };
-  const flush = () => {
-    ready = true;
-    while (queue.length) {
-      const fn = queue.shift();
-      try { fn(); } catch { }
-    }
-  };
-
-  // ---- stubs adiantados (evita perder eventos antes do init) ----
-  if (!window.dataLayer) window.dataLayer = [];
-  if (!window.gtag) window.gtag = function () { window.dataLayer.push(arguments); };
-
-  if (!window.fbq) {
-    const n = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-    n.queue = []; n.loaded = true; n.version = '2.0'; n.push = n;
-    window.fbq = n;
-    window._fbq = n;
-  }
-
-  const loadScript = (src, id) =>
-    new Promise((resolve, reject) => {
-      if (id && document.getElementById(id)) return resolve();
-      const s = document.createElement('script');
-      if (id) s.id = id;
-      s.async = true;
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-
-  const init = async () => {
-    if (inited) return;
-    const consent = localStorage.getItem('cardapio/lgpdConsent') === '1';
-    if (!consent) return;
-
-    // GA4
-    await loadScript(`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, 'ga4-script');
-    window.gtag('js', new Date());
-    window.gtag('config', GA_ID);
-
-    // Pixel
-    await loadScript('https://connect.facebook.net/en_US/fbevents.js', 'fb-pixel-script');
-    window.fbq('init', FB_PIXEL_ID);
-    try { window.fbq('consent', 'grant'); } catch { }
-
-    inited = true;
-    flush(); // ✅ a partir daqui, tudo que estava na fila é enviado
-  };
-
-  const initIfNeeded = () => { init(); };
-
-  const consentGranted = () => {
-    try {
-      window.gtag('consent', 'update', {
-        analytics_storage: 'granted',
-        ad_storage: 'granted',
-        ad_user_data: 'granted',
-        ad_personalization: 'granted',
-      });
-    } catch { }
-    try { window.fbq('consent', 'grant'); } catch { }
-  };
-
-  const page = ({ name }) => {
-    run(() => {
-      window.gtag('event', 'page_view', {
-        page_title: name,
-        page_location: window.location.href,
-        page_path: window.location.pathname,
-      });
-      window.fbq('track', 'PageView');
-    });
-  };
-
-  // 🔁 SEMPRE dispara (com ID único) e nunca perde evento
-  const viewItem = (item) => {
-    const price = parseFloat(item.price) || 0;
-    const eventID = `vc_${item.id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-    run(() => {
-      window.gtag('event', 'view_item', {
-        currency: 'BRL',
-        value: price,
-        items: [{
-          item_id: item.id,
-          item_name: item.title,
-          item_category: item.subtitle || '',
-          price
-        }],
-        event_id: eventID,
-      });
-
-      window.fbq(
-        'track',
-        'ViewContent',
-        {
-          content_ids: [item.id],
-          content_name: item.title,
-          content_type: 'product',
-          value: price,
-          currency: 'BRL',
-          content_category: item.subtitle || '',
-        },
-        { eventID }
-      );
-    });
-  };
-
-  const like = (item, liked) => {
-    const price = parseFloat(item.price) || 0;
-    run(() => {
-      window.gtag('event', liked ? 'add_to_wishlist' : 'remove_from_wishlist', {
-        currency: 'BRL',
-        value: price,
-        items: [{ item_id: item.id, item_name: item.title, item_category: item.subtitle || '', price }],
-      });
-      if (liked) {
-        window.fbq('track', 'AddToWishlist', {
-          content_ids: [item.id], content_name: item.title, content_type: 'product', value: price, currency: 'BRL'
-        });
-      } else {
-        window.fbq('trackCustom', 'RemoveFromWishlist', {
-          content_ids: [item.id], content_name: item.title
-        });
-      }
-    });
-  };
-
-  const selectUnit = (unit) => {
-    run(() => {
-      window.gtag('event', 'select_location', { location_id: unit });
-      window.fbq('trackCustom', 'SelectLocation', { location: unit });
-    });
-  };
-
-  const rate = (item, stars) => {
-    run(() => {
-      window.gtag('event', 'rate_item', {
-        value: stars,
-        items: [{ item_id: item.id, item_name: item.title }],
-      });
-      window.fbq('trackCustom', 'RateItem', {
-        content_ids: [item.id], content_name: item.title, value: stars
-      });
-    });
-  };
-
-  return { initIfNeeded, consentGranted, page, viewItem, like, selectUnit, init, rate };
-})();
-
 
 const pop = keyframes`0%{transform:scale(1)}35%{transform:scale(1.28)}100%{transform:scale(1)}`;
 const makeParticle = (dx, dy) => keyframes`0%{transform:translate(0,0);opacity:1}100%{transform:translate(${dx}px,${dy}px);opacity:0}`;
@@ -416,7 +246,6 @@ const RowSkeleton = () => (
       <Skeleton variant="text" width="30%" height={20} sx={{ mt: .4, bgcolor: skBg }} animation="wave" />
     </Box>
     <Box sx={{ display: 'flex', gap: 1, justifySelf: 'end', alignItems: 'center' }}>
-      <Skeleton variant="circular" width={18} height={18} sx={{ bgcolor: skBg }} animation="wave" />
       <Skeleton variant="circular" width={24} height={24} sx={{ bgcolor: skBg }} animation="wave" />
     </Box>
   </Box>
@@ -452,17 +281,13 @@ function UnitConsentScreen({ onAccepted }) {
     localStorage.setItem('cardapio/lgpdConsent', '1');
     localStorage.setItem('cardapio/unit', unit);
     try { document.cookie = `lgpd_consent=true; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`; } catch { }
-    try { window.dataLayer?.push({ event: 'lgpd_consent_granted', unit }); } catch { }
-    Analytics.consentGranted();
-    await Analytics.init();
-    Analytics.selectUnit(unit);
-    onAccepted(unit);
+    onAccepted(unit); // parent dispara o evento 'ma:consent-granted'
   };
 
   return (
     <Box sx={{
       minHeight: '100vh',
-      bgcolor: '#1b1b19',          // 🔸 fundo atualizado
+      bgcolor: '#1b1b19',
       color: '#fff',
       position: 'relative',
       pt: 'calc(env(safe-area-inset-top) + 28px)',
@@ -471,19 +296,13 @@ function UnitConsentScreen({ onAccepted }) {
       flexDirection: 'column',
       alignItems: 'center',
     }}>
-      {/* 🔸 Logo Porks centralizada */}
+      {/* Logo */}
       <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Box
           component="img"
           src="https://porks.nyc3.cdn.digitaloceanspaces.com/logo-porks2.jpg"
           alt="Porks"
-          sx={{
-            width: 200,
-            height: 'auto',
-            borderRadius: 1,
-            userSelect: 'none',
-            pointerEvents: 'none'
-          }}
+          sx={{ width: 200, height: 'auto', borderRadius: 1, userSelect: 'none', pointerEvents: 'none' }}
         />
       </Box>
 
@@ -491,7 +310,6 @@ function UnitConsentScreen({ onAccepted }) {
         Selecione a unidade para continuar.
       </Typography>
 
-      {/* 🔹 Sheet de seleção de unidade + LGPD (mantidos) */}
       <Slide direction="up" in>
         <Paper elevation={12} sx={{
           position: 'fixed',
@@ -539,7 +357,6 @@ function UnitConsentScreen({ onAccepted }) {
   );
 }
 
-
 /* ---- Helpers de busca ---- */
 const normalize = (s) =>
   (s || '')
@@ -573,7 +390,6 @@ function CardapioInner() {
     catch { return []; }
   })();
 
-  // ESTADOS (devem vir antes do helper)
   const [items, setItems] = useState(() =>
     initialItems.map(it => ({ ...it, liked: savedFavIds.includes(it.id) }))
   );
@@ -584,15 +400,12 @@ function CardapioInner() {
     initialDrinks.map(it => ({ ...it, liked: savedFavIds.includes(it.id) }))
   );
 
-  // Coleções ativas conforme o flag
   const getAllActive = React.useCallback(() => {
     return PROMOS_ENABLED ? [...items, ...drinks, ...promos] : [...items, ...drinks];
   }, [items, drinks, promos]);
 
-
-  const itemsGrouped = useMemo(() => groupByCategory(items, itemCategories), [items, itemCategories]);
-  const drinksGrouped = useMemo(() => groupByCategory(drinks, drinkCategories), [drinks, drinkCategories]);
-
+  const itemsGrouped = useMemo(() => groupByCategory(items, itemCategories), [items]);
+  const drinksGrouped = useMemo(() => groupByCategory(drinks, drinkCategories), [drinks]);
 
   const [loading, setLoading] = useState(true);
   const [slide, setSlide] = useState(0);
@@ -626,7 +439,6 @@ function CardapioInner() {
   };
   const isPropMarked = (item, key) => !!(propsMarked[item.id] || []).includes(key);
 
-
   const openReviewFlow = async () => {
     const shareUrl = REVIEW_URLS[1];
     if (navigator.share) {
@@ -652,15 +464,6 @@ function CardapioInner() {
     }
   };
 
-  useEffect(() => { Analytics.initIfNeeded(); Analytics.page({ name: 'inicio' }); }, []);
-
-  const lastTrackedIdRef = useRef(null);
-
-  const openDetail = (it) => {
-    const unique = `${it.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    Analytics.viewItem({ ...it, eventUniqueId: unique });
-    setDetail({ ...it, __openedAt: Date.now() });
-  };
   // Corrige automaticamente se o localStorage estiver com "Águas Claras"
   useEffect(() => {
     const u = localStorage.getItem('cardapio/unit');
@@ -669,6 +472,7 @@ function CardapioInner() {
       setUnit(SINGLE_UNIT);
     }
   }, []);
+
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1500); return () => clearTimeout(t); }, []);
 
   useEffect(() => {
@@ -686,10 +490,6 @@ function CardapioInner() {
       document.cookie = `cardapio/favs=${encodeURIComponent(likedIds.join(','))}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax`;
     } catch { }
   }, [items, promos, drinks, getAllActive]);
-
-  useEffect(() => { Analytics.page({ name: nav }); }, [nav]);
-
-  const prevNavRef = useRef('inicio');
 
   /* Busca */
   useEffect(() => {
@@ -731,7 +531,7 @@ function CardapioInner() {
 
     const t = setTimeout(run, 180);
     return () => clearTimeout(t);
-  }, [searchText, searchOpen, items, promos, drinks]);
+  }, [searchText, searchOpen, items, promos, drinks, getAllActive]);
 
   const triggerBurst = (id) => {
     setBurstMap(m => {
@@ -749,6 +549,7 @@ function CardapioInner() {
     setPromos(prev => prev.map(it => it.id === id ? { ...it, liked: !it.liked } : it));
     setDrinks(prev => prev.map(it => it.id === id ? { ...it, liked: !it.liked } : it));
   };
+
   const handleFavoriteClick = (item, e) => {
     e?.stopPropagation();
 
@@ -772,8 +573,9 @@ function CardapioInner() {
       });
     }
 
-    Analytics.like(item, nowLiked);
+    // Tracking removido (feito apenas no AcquisitionMachine)
   };
+
   const openSearch = () => setSearchOpen(true);
   const closeSearch = () => {
     setSearchOpen(false);
@@ -781,17 +583,21 @@ function CardapioInner() {
     setSearchText('');
     setSearchResults([]);
     if (nav === 'busca') {
-      setNav(prevNavRef.current || 'inicio'); // volta para a listagem
+      setNav(prevNavRef.current || 'inicio');
     }
+  };
+
+  const openDetail = (it) => {
+    setDetail({ ...it, __openedAt: Date.now() });
+    // Tracking removido (feito apenas no AcquisitionMachine)
   };
 
   const closeDetail = () => {
     setDetail(null);
     if (nav === 'busca') {
-      setNav(prevNavRef.current || 'inicio'); // segurança extra
+      setNav(prevNavRef.current || 'inicio');
     }
   };
-
 
   const forceUnitSobradinho = () => {
     localStorage.setItem('cardapio/unit', SINGLE_UNIT);
@@ -807,13 +613,12 @@ function CardapioInner() {
       return next;
     });
     setNotice({ item, stars });
-    Analytics.rate(item, stars);
+    // Tracking removido (feito apenas no AcquisitionMachine)
   };
 
   const favorites = getAllActive().filter(x => x.liked);
   const showSugSkel = loading || items.length === 0;
   const showPromoSkel = PROMOS_ENABLED && (loading || promos.length === 0);
-
 
   const handleOpenFromSearch = (it) => {
     closeSearch();
@@ -827,6 +632,8 @@ function CardapioInner() {
     justifySelf: 'end',
     position: 'relative',
   };
+
+  const prevNavRef = useRef('inicio');
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: palette.page, pt: { xs: 'calc(env(safe-area-inset-top) + 12px)', sm: 0 }, pb: { xs: 'calc(10px + env(safe-area-inset-bottom))', sm: 10 } }}>
@@ -967,7 +774,7 @@ function CardapioInner() {
                   <Typography sx={{ mb: 1.5, color: palette.headerGreen, fontSize: 22, fontFamily: "'Alfa Slab One', Georgia, serif", fontWeight: 400 }}>
                     Promoções do dia
                   </Typography>
-                  {/* ... resto do bloco de promos inalterado ... */}
+                  {/* ... render de promos ... */}
                 </Paper>
               )
             )}
@@ -1188,7 +995,7 @@ function CardapioInner() {
           value={nav}
           onChange={(_, v) => {
             if (v === 'busca') {
-              prevNavRef.current = nav;      // guarda de onde veio
+              prevNavRef.current = nav;
               setNav('busca');
               openSearch();
             } else {
@@ -1223,25 +1030,15 @@ function CardapioInner() {
         </BottomNavigation>
       </Box>
 
-      {/* Overlay de Busca (corrigido: sem unmount do wrapper) */}
+      {/* Overlay de Busca */}
       <Box
         sx={{ position: 'fixed', inset: 0, zIndex: (t) => t.zIndex.tooltip + 10 }}
-        // mantém montado; só controla interações/visibilidade
-        style={{
-          pointerEvents: searchOpen ? 'auto' : 'none',
-          visibility: searchOpen ? 'visible' : 'hidden',
-        }}
+        style={{ pointerEvents: searchOpen ? 'auto' : 'none', visibility: searchOpen ? 'visible' : 'hidden' }}
       >
         {/* Backdrop */}
         <Box
           onClick={closeSearch}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            bgcolor: 'rgba(0,0,0,.18)',
-            backdropFilter: 'blur(2px)',
-            transition: 'opacity .2s',
-          }}
+          sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,.18)', backdropFilter: 'blur(2px)', transition: 'opacity .2s' }}
           style={{ opacity: searchOpen ? 1 : 0 }}
         />
 
@@ -1615,8 +1412,8 @@ function CardapioInner() {
                   variant="contained"
                   onClick={openReviewFlow}
                   sx={{
-                    bgcolor: '#0c4027',    // fundo verde
-                    color: '#fff',                   // texto branco
+                    bgcolor: '#0c4027',
+                    color: '#fff',
                     '&:hover': { bgcolor: '#0c4027', color: '#fff' },
                     borderRadius: 999,
                     px: 2,
@@ -1656,8 +1453,25 @@ export default function CardapioLayout() {
     const u = localStorage.getItem('cardapio/unit');
     return Boolean(c && u);
   });
-  if (!gateOpen) {
-    return <UnitConsentScreen onAccepted={() => setGateOpen(true)} />;
-  }
-  return <CardapioInner />;
+
+  return (
+    <>
+      {/* Máquina headless: dispara Pixel + eventos quando detectar consentimento */}
+      <AcquisitionMachine
+        metaPixelId="2431106123757946"
+        brand="Porks Sobradinho"
+        cookieDays={365}
+      />
+
+      {gateOpen ? (
+        <CardapioInner />
+      ) : (
+        <UnitConsentScreen onAccepted={() => {
+          setGateOpen(true);
+          // avisa a máquina que o consentimento foi dado AGORA
+          window.dispatchEvent(new CustomEvent('ma:consent-granted'));
+        }} />
+      )}
+    </>
+  );
 }
