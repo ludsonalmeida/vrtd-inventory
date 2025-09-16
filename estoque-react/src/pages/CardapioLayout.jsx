@@ -1461,6 +1461,7 @@ export default function CardapioLayout() {
         metaPixelId="2431106123757946"
         brand="Porks Sobradinho"
         cookieDays={365}
+        enableImageFallback={true}
       />
 
       {gateOpen ? (
