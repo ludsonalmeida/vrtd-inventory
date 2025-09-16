@@ -120,7 +120,7 @@ export default function AcquisitionMachine({
     }
 
     // Aguarda o Pixel constar em fbq.getState().pixelsByID (sinal de que está pronto)
-    function waitForPixelActive(pixelId, timeoutMs = 8000) {
+    function waitForPixelActive(pixelId, timeoutMs = 1000) {
       return new Promise((resolve) => {
         const started = Date.now();
         const check = () => {
