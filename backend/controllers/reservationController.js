@@ -15,15 +15,24 @@ function buildTransport() {
   const port = Number(process.env.EMAIL_PORT || 587);
   const secure = String(process.env.EMAIL_SECURE || 'false') === 'true';
 
-  if (!host) {
-    console.warn('[EMAIL] EMAIL_HOST não definido — e-mails desabilitados');
-    return null;
-  }
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.warn('[EMAIL] EMAIL_USER/EMAIL_PASS ausentes — e-mails desabilitados');
     return null;
   }
 
+  // Se não houver EMAIL_HOST, usa preset do Gmail (service:'gmail')
+  if (!host) {
+    console.warn('[EMAIL] EMAIL_HOST ausente — usando preset "gmail"');
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+  }
+
+  // Configuração SMTP explícita (ex.: Gmail SMTP, SendGrid, etc.)
   return nodemailer.createTransport({
     host,
     port,
@@ -42,7 +51,8 @@ async function sendReservationEmail(reservationDoc) {
   if (!mailer) return false;
 
   const recipients = process.env.EMAIL_TO || DEFAULT_RECIPIENTS;
-  const from = process.env.EMAIL_FROM || 'no-reply@sobradinhoporks.com.br';
+  // Gmail costuma exigir que o remetente seja o próprio usuário autenticado (ou alias verificado)
+  const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
   const whenDate = reservationDoc.date instanceof Date
     ? reservationDoc.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
