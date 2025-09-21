@@ -4,10 +4,11 @@
 require('dotenv').config();
 const Reservation = require('../models/Reservation');
 const nodemailer = require('nodemailer');
-const twilioClient = require('twilio')(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+
+const twilioClient =
+  process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
+    ? require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+    : null;
 
 // ---------- Helpers: Email ----------
 function buildTransport() {
@@ -20,7 +21,6 @@ function buildTransport() {
     return null;
   }
 
-  // Se não houver EMAIL_HOST, usa preset do Gmail (service:'gmail')
   if (!host) {
     console.warn('[EMAIL] EMAIL_HOST ausente — usando preset "gmail"');
     return nodemailer.createTransport({
@@ -32,7 +32,6 @@ function buildTransport() {
     });
   }
 
-  // Configuração SMTP explícita (ex.: Gmail SMTP, SendGrid, etc.)
   return nodemailer.createTransport({
     host,
     port,
@@ -50,13 +49,16 @@ const DEFAULT_RECIPIENTS = 'ludson.bsa@gmail.com,porks.sobradinho@gmail.com';
 async function sendReservationEmail(reservationDoc) {
   if (!mailer) return false;
 
-  const recipients = process.env.EMAIL_TO || DEFAULT_RECIPIENTS;
-  // Gmail costuma exigir que o remetente seja o próprio usuário autenticado (ou alias verificado)
+  const recipients =
+    (process.env.EMAIL_TO && String(process.env.EMAIL_TO)) || DEFAULT_RECIPIENTS;
+
+  // Gmail: remetente deve ser o usuário autenticado (ou alias verificado)
   const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
-  const whenDate = reservationDoc.date instanceof Date
-    ? reservationDoc.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
-    : '-';
+  const whenDate =
+    reservationDoc.date instanceof Date
+      ? reservationDoc.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+      : '-';
   const whenTime = reservationDoc.time || '-';
 
   const subject = `🟣 Nova reserva — ${reservationDoc.name} (${reservationDoc.people} pessoas)`;
@@ -67,7 +69,9 @@ async function sendReservationEmail(reservationDoc) {
     `Quando: ${whenDate} às ${whenTime}`,
     `Pessoas: ${reservationDoc.people || '-'}`,
     `Área: ${reservationDoc.area || '-'}`,
-    `Criada em: ${new Date(reservationDoc.createdAt || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`,
+    `Criada em: ${new Date(reservationDoc.createdAt || Date.now()).toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+    })}`,
     `ID: ${reservationDoc._id}`,
   ].join('\n');
 
@@ -79,13 +83,22 @@ async function sendReservationEmail(reservationDoc) {
       <li><b>Quando:</b> ${whenDate} às ${whenTime}</li>
       <li><b>Pessoas:</b> ${reservationDoc.people || '-'}</li>
       <li><b>Área:</b> ${reservationDoc.area || '-'}</li>
-      <li><b>Criada em:</b> ${new Date(reservationDoc.createdAt || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</li>
+      <li><b>Criada em:</b> ${new Date(reservationDoc.createdAt || Date.now()).toLocaleString(
+        'pt-BR',
+        { timeZone: 'America/Sao_Paulo' }
+      )}</li>
       <li><b>ID:</b> ${reservationDoc._id}</li>
     </ul>
   `;
 
   try {
-    const info = await mailer.sendMail({ from, to: recipients, subject, text, html });
+    const info = await mailer.sendMail({
+      from,
+      to: recipients,
+      subject,
+      text,
+      html,
+    });
     console.log('[EMAIL] Enviado:', info.messageId, 'para:', recipients);
     return true;
   } catch (err) {
@@ -94,33 +107,25 @@ async function sendReservationEmail(reservationDoc) {
   }
 }
 
-// ---------- Utils ----------
+// ---------- Helpers: Utils ----------
 function tzDateBR(date) {
-  // Garante string legível no TZ de Brasília
   return new Date(date || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
+
+// ---------- Controllers ----------
 
 // GET /api/reservations
 // Lista reservas com paginação: usa ?page=1&limit=10
 async function getAllReservations(req, res) {
   try {
-    const page  = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
     const total = await Reservation.countDocuments();
-    const list = await Reservation.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
+    const list = await Reservation.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
     return res.json({
       data: list,
-      meta: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
     });
   } catch (err) {
     console.error('Erro ao buscar reservas:', err);
@@ -146,37 +151,33 @@ async function getReservationById(req, res) {
 // POST /api/reservations
 async function createReservation(req, res) {
   try {
+    console.log('[RES] createReservation HIT', req.body);
+
     const { date, time, name, phone, people, area } = req.body;
 
-    // Campos obrigatórios
     if (!date || !time || !name || !phone || !people || !area) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     }
 
-    // Parse data (YYYY-MM-DD)
     const [year, month, day] = String(date).split('-').map(Number);
     const parsedDate = new Date(year, month - 1, day);
     if (isNaN(parsedDate)) {
       return res.status(400).json({ error: 'Data inválida' });
     }
 
-    // Valida horário HH:mm
     if (!/^\d{2}:\d{2}$/.test(time)) {
       return res.status(400).json({ error: 'Horário inválido (HH:mm)' });
     }
 
-    // Valida telefone (DD) NNNNN-NNNN
     if (!/^\(\d{2}\) \d{4,5}-\d{4}$/.test(phone)) {
       return res.status(400).json({ error: 'Telefone inválido. Use (DD) NNNNN-NNNN' });
     }
 
-    // Valida área
     const validAreas = ['Coberta', 'Descoberta', 'Porks Deck'];
     if (!validAreas.includes(area)) {
       return res.status(400).json({ error: 'Área de preferência inválida' });
     }
 
-    // Número de pessoas
     let peopleCount;
     if (people === '10+') {
       peopleCount = 11;
@@ -187,7 +188,6 @@ async function createReservation(req, res) {
       }
     }
 
-    // Cria e salva a reserva
     const newReservation = new Reservation({
       date: parsedDate,
       time,
@@ -196,53 +196,64 @@ async function createReservation(req, res) {
       people: peopleCount,
       area,
     });
+
     const saved = await newReservation.save();
+    console.log('[RES] saved', saved._id);
 
-    // ---------- Notificações: Email + WhatsApp (não bloqueiam a resposta) ----------
-    const emailPromise = sendReservationEmail(saved);
+    // ---------- Notificações ----------
+    // Para depuração em produção: defina EMAIL_SYNC=true nas variáveis e o envio fica síncrono (mostra erro no log)
+    const shouldAwait = String(process.env.EMAIL_SYNC || 'false') === 'true';
 
-    const whatsappPromise = (async () => {
-      try {
-        if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-          console.warn('[TWILIO] Credenciais ausentes — WhatsApp desabilitado');
+    if (shouldAwait) {
+      const okEmail = await sendReservationEmail(saved);
+      console.log('[RES] email ok?', okEmail);
+    } else {
+      sendReservationEmail(saved)
+        .then((ok) => console.log('[RES] email ok?', ok))
+        .catch((err) => console.error('[RES] email erro:', err));
+    }
+
+    if (twilioClient && process.env.TWILIO_WHATSAPP_FROM && process.env.COMPANY_WHATSAPP_TO) {
+      const toNumber = String(process.env.COMPANY_WHATSAPP_TO).startsWith('whatsapp:')
+        ? process.env.COMPANY_WHATSAPP_TO
+        : `whatsapp:${process.env.COMPANY_WHATSAPP_TO}`;
+
+      const messageBody =
+        `📅 *Nova Reserva*\n` +
+        `Nome: ${saved.name}\n` +
+        `Data: ${saved.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n` +
+        `Hora: ${saved.time}\n` +
+        `Telefone: ${saved.phone}\n` +
+        `Pessoas: ${saved.people}\n` +
+        `Área: ${saved.area}\n` +
+        `Criada em: ${tzDateBR(saved.createdAt)}`;
+
+      const sendWhatsApp = async () => {
+        try {
+          const resp = await twilioClient.messages.create({
+            from: process.env.TWILIO_WHATSAPP_FROM,
+            to: toNumber,
+            body: messageBody,
+          });
+          console.log('WhatsApp enviado com sucesso:', resp.sid);
+          return true;
+        } catch (twErr) {
+          console.error('Erro ao enviar notificação via Twilio:', twErr);
           return false;
         }
-        const messageBody =
-          `📅 *Nova Reserva*\n` +
-          `Nome: ${saved.name}\n` +
-          `Data: ${saved.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n` +
-          `Hora: ${saved.time}\n` +
-          `Telefone: ${saved.phone}\n` +
-          `Pessoas: ${saved.people}\n` +
-          `Área: ${saved.area}\n` +
-          `Criada em: ${tzDateBR(saved.createdAt)}`;
-        const toNumber = (process.env.COMPANY_WHATSAPP_TO || '').startsWith('whatsapp:')
-          ? process.env.COMPANY_WHATSAPP_TO
-          : `whatsapp:${process.env.COMPANY_WHATSAPP_TO || ''}`;
+      };
 
-        if (!process.env.TWILIO_WHATSAPP_FROM || !toNumber) {
-          console.warn('[TWILIO] FROM/TO ausentes — não enviado');
-          return false;
-        }
-
-        const resp = await twilioClient.messages.create({
-          from: process.env.TWILIO_WHATSAPP_FROM,
-          to: toNumber,
-          body: messageBody,
-        });
-        console.log('WhatsApp enviado com sucesso:', resp.sid);
-        return true;
-      } catch (twErr) {
-        console.error('Erro ao enviar notificação via Twilio:', twErr);
-        return false;
+      if (shouldAwait) {
+        const okWa = await sendWhatsApp();
+        console.log('[RES] whatsapp ok?', okWa);
+      } else {
+        sendWhatsApp()
+          .then((okWa) => console.log('[RES] whatsapp ok?', okWa))
+          .catch((errWa) => console.error('[RES] whatsapp erro:', errWa));
       }
-    })();
-
-    // Dispara em paralelo, sem travar o response
-    Promise.allSettled([emailPromise, whatsappPromise]).then((results) => {
-      const [emailRes, waRes] = results;
-      console.log('[NOTIFY] email:', emailRes.status, '| whatsapp:', waRes.status);
-    });
+    } else {
+      console.warn('[TWILIO] Desabilitado (cliente nulo ou FROM/TO ausentes)');
+    }
 
     return res.status(201).json(saved);
   } catch (err) {
@@ -257,20 +268,41 @@ async function updateReservation(req, res) {
     const { id } = req.params;
     const { date, time, name, phone, people, area } = req.body;
     const updateData = {};
+
     if (date) {
       const [y, m, d] = String(date).split('-').map(Number);
       updateData.date = new Date(y, m - 1, d);
+      if (isNaN(updateData.date)) {
+        return res.status(400).json({ error: 'Data inválida' });
+      }
     }
-    if (time) updateData.time = time;
+    if (time) {
+      if (!/^\d{2}:\d{2}$/.test(time)) {
+        return res.status(400).json({ error: 'Horário inválido (HH:mm)' });
+      }
+      updateData.time = time;
+    }
     if (name) updateData.name = String(name).trim();
-    if (phone) updateData.phone = phone;
+    if (phone) {
+      if (!/^\(\d{2}\) \d{4,5}-\d{4}$/.test(phone)) {
+        return res.status(400).json({ error: 'Telefone inválido. Use (DD) NNNNN-NNNN' });
+      }
+      updateData.phone = phone;
+    }
     if (people) updateData.people = people === '10+' ? 11 : Number(people);
-    if (area) updateData.area = area;
+    if (area) {
+      const validAreas = ['Coberta', 'Descoberta', 'Porks Deck'];
+      if (!validAreas.includes(area)) {
+        return res.status(400).json({ error: 'Área de preferência inválida' });
+      }
+      updateData.area = area;
+    }
 
     const updated = await Reservation.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
     }).exec();
+
     if (!updated) {
       return res.status(404).json({ error: 'Reserva não encontrada' });
     }
@@ -301,5 +333,5 @@ module.exports = {
   getReservationById,
   createReservation,
   updateReservation,
-  deleteReservation
+  deleteReservation,
 };
