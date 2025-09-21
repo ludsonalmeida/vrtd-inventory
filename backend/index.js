@@ -88,8 +88,34 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno no servidor' });
 });
 
+// index.js (antes do 404)
+app.get('/api/_mailtest', async (req, res) => {
+  try {
+    const nodemailer = require('nodemailer');
+    const t = process.env.EMAIL_HOST
+      ? nodemailer.createTransport({
+          host: process.env.EMAIL_HOST,
+          port: Number(process.env.EMAIL_PORT || 465),
+          secure: String(process.env.EMAIL_SECURE || 'true') === 'true',
+          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+        })
+      : nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
+    await t.verify();
+    const info = await t.sendMail({
+      from: process.env.EMAIL_USER, // importante p/ Gmail
+      to: process.env.EMAIL_TO || 'ludson.bsa@gmail.com,porks.sobradinho@gmail.com',
+      subject: 'Teste SMTP — PROD',
+      text: 'Envio funcionando na produção ✔️'
+    });
+    res.json({ ok: true, messageId: info.messageId });
+  } catch (e) { console.error('[MAILTEST PROD]', e); res.status(500).json({ ok:false, error:String(e) }); }
+});
+
+
 // 10) Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
   console.log('Timezone corrente (servidor):', new Date().toLocaleString());
 });
+
+
