@@ -30,7 +30,7 @@ const { authenticate } = require('./controllers/authController');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-/* 1) Healthcheck MUITO cedo (o Railway usa isso pra checar se subiu) */
+/* 1) Healthcheck bem cedo */
 app.get('/health', (req, res) => res.status(200).send('ok'));
 
 /* 2) Conexão MongoDB */
@@ -43,7 +43,7 @@ mongoose
   .then(() => console.log('Conectado ao MongoDB'))
   .catch((err) => console.error('Erro ao conectar ao MongoDB:', err));
 
-/* 3) CORS GLOBAL — antes de qualquer rota */
+/* 3) CORS GLOBAL (preflight 204 automático) */
 const allowedOrigins = [
   'http://localhost:5173',
   'https://sobradinhoporks.com.br',
@@ -63,23 +63,23 @@ app.use(
       'Content-Type',
       'Authorization',
       'X-Requested-With',
-      // se você NÃO envia X-Request-Id do front, pode remover:
+      // Se NÃO usa esse header no front, pode remover:
       'X-Request-Id',
     ],
-    credentials: true, // deixe true só se usar cookies cross-site; caso contrário pode pôr false
+    credentials: true,
     maxAge: 86400,
-    preflightContinue: false, // padrão: o próprio cors responde 204
+    preflightContinue: false, // o próprio cors responde 204 no OPTIONS
   })
 );
 
-// Handler explícito pro preflight apenas sob /api/* (compatível com path-to-regexp)
-app.options('/api/*', cors());
+// ⚠️ IMPORTANTE: não registre app.options('*') nem '/api/*' no Express 5.
+// Se quiser algo explícito, use: app.options('/api/(.*)', cors());
 
 /* 4) Body parsers */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* 5) Rotas de diagnóstico */
+/* 5) Diagnóstico */
 app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
@@ -128,10 +128,8 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/estoque', estoqueRoutes);
 app.use('/api/reports', reportRoutes);
 
-/* 7) Rotas protegidas — movimentos primeiro */
+/* 7) Rotas protegidas */
 app.use('/api/stock/movements', authenticate, stockMovementRoutes);
-
-/* 8) Rotas protegidas “genéricas” */
 app.use('/api/stock', authenticate, stockRoutes);
 app.use('/api/menu-items', authenticate, menuItemRoutes);
 app.use('/api/units', authenticate, unitRoutes);
@@ -140,12 +138,12 @@ app.use('/api/suppliers', authenticate, supplierRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/products', authenticate, productRoutes);
 
-/* 9) Rota raiz */
+/* 8) Rota raiz */
 app.get('/', (req, res) => {
   res.send('API de Estoque rodando');
 });
 
-/* 10) 404 e handler de erro */
+/* 9) 404 e handler de erro */
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
@@ -160,16 +158,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno no servidor' });
 });
 
-/* 11) Sobe o servidor — UMA vez, porta do Railway e 0.0.0.0 */
+/* 10) Subir servidor (uma vez só), porta do Railway e 0.0.0.0 */
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API listening on ${PORT}`);
   console.log('Timezone corrente (servidor):', new Date().toLocaleString());
-});
-
-/* (Opcional) Log útil pra caçar problemas de latência/status */
-process.on('unhandledRejection', (e) => {
-  console.error('[unhandledRejection]', e);
-});
-process.on('uncaughtException', (e) => {
-  console.error('[uncaughtException]', e);
 });
