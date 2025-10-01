@@ -7,6 +7,7 @@ import MenuCards from '../components/MenuCards';
 import ReservationModal from '../components/ReservationModal';
 import ContactModal from '../components/ContactModal';
 import PixelLoader from '../components/PixelLoader';
+import SuccessReservationOverlay from '../components/SuccessReservationOverlay';
 import api from '../services/api';
 
 import {
@@ -22,13 +23,14 @@ import {
   Snackbar,
   Alert,
   IconButton,
-  Fade
+  Fade,
+  Backdrop,
+  CircularProgress
 } from '@mui/material';
 import RoomIcon from '@mui/icons-material/Room';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
-
 
 // Dados estáticos de terça a domingo conforme imagem
 const weeklyEvents = [
@@ -57,6 +59,8 @@ export default function HomePage() {
   const [reservationOpen, setReservationOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [successOpen, setSuccessOpen] = useState(false); // Overlay de sucesso
+  const [submitting, setSubmitting] = useState(false);   // <- NOVO: loading enquanto envia
 
   useEffect(() => {
     setEvents(weeklyEvents);
@@ -90,18 +94,26 @@ export default function HomePage() {
       .replace(/\s+/g, '') + '.jpg';
   }
 
-
-
-  // Envio de reserva
+  // Envio de reserva (com loading)
   const handleReservationSubmit = async data => {
     try {
+      setSubmitting(true); // abre overlay de loading
       await api.post('/reservations', data);
-      setSnackbar({ open: true, message: 'Reserva criada com sucesso! Nossa equipe entrará em contato nos horários de funcionamento: terça a domingo 16h–00h', severity: 'success' });
+
+      // Sucesso: fecha modal e abre overlay central com check animado
       setReservationOpen(false);
+      setSuccessOpen(true);
+
+      // (Opcional) GA4 evento de UX do overlay
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'overlay_reserva_sucesso', { screen: 'HomePage' });
+      }
     } catch (err) {
       console.error('[HomePage] Erro ao criar reserva:', err);
       const msg = err.response?.data?.error || err.message || 'Erro ao salvar reserva';
       setSnackbar({ open: true, message: msg, severity: 'error' });
+    } finally {
+      setSubmitting(false); // fecha overlay de loading
     }
   };
 
@@ -134,7 +146,7 @@ export default function HomePage() {
             width: '100%',
             maxWidth: 600,
             mx: 'auto',
-            height: 300, // Altura fixa pra evitar sobreposição na transição
+            height: 300,
             borderRadius: 2,
             overflow: 'hidden',
             bgcolor: '#1f1f1f',
@@ -255,6 +267,7 @@ export default function HomePage() {
           </IconButton>
         </Box>
       </Container>
+
       {/* Seção Promoções */}
       <Box id="destaques"><MenuCards /></Box>
 
@@ -329,11 +342,51 @@ export default function HomePage() {
         </Button>
       </Container>
 
-      {/* Modais e Snackbar */}
-      <ReservationModal open={reservationOpen} onClose={handleCloseReservation} onSubmit={handleReservationSubmit} bannerImages={venueImages} />
+      {/* Modais, Overlays e Snackbar */}
+      <ReservationModal
+        open={reservationOpen}
+        onClose={handleCloseReservation}
+        onSubmit={handleReservationSubmit}
+        bannerImages={venueImages}
+      />
       <ContactModal open={contactOpen} onClose={handleCloseContact} />
-      <Snackbar open={snackbar.open} autoHideDuration={7000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>{snackbar.message}</Alert>
+
+      {/* Overlay central de confirmação de pré-reserva */}
+      <SuccessReservationOverlay open={successOpen} onClose={() => setSuccessOpen(false)} />
+
+      {/* Overlay de LOADING durante envio da pré-reserva */}
+      <Backdrop
+        open={submitting}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.modal + 3,
+          backdropFilter: 'blur(2px)',
+          backgroundColor: 'rgba(0,0,0,0.6)'
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <CircularProgress thickness={4} size={66} />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Efetuando sua pré-reserva...
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.85 }}>
+            Aguarde alguns instantes. Não feche esta página.
+          </Typography>
+        </Box>
+      </Backdrop>
+
+      {/* Snackbar mantido para ERROS (sucesso agora é o overlay) */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={7000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </>
   );
