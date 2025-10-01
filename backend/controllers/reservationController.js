@@ -92,13 +92,7 @@ async function sendReservationEmail(reservationDoc) {
   `;
 
   try {
-    const info = await mailer.sendMail({
-      from,
-      to: recipients,
-      subject,
-      text,
-      html,
-    });
+    const info = await mailer.sendMail({ from, to: recipients, subject, text, html });
     console.log('[EMAIL] Enviado:', info.messageId, 'para:', recipients);
     return true;
   } catch (err) {
@@ -110,6 +104,13 @@ async function sendReservationEmail(reservationDoc) {
 // ---------- Helpers: Utils ----------
 function tzDateBR(date) {
   return new Date(date || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
+
+// dispara tarefa sem bloquear a resposta
+function fireAndForget(fn) {
+  setImmediate(async () => {
+    try { await fn(); } catch (e) { console.error('[reservation bg job]', e); }
+  });
 }
 
 // ---------- Controllers ----------
@@ -149,7 +150,9 @@ async function getReservationById(req, res) {
 }
 
 // POST /api/reservations
+// -> grava rápido e responde 202; notificações seguem em background
 async function createReservation(req, res) {
+  const t0 = Date.now();
   try {
     console.log('[RES] createReservation HIT', req.body);
 
@@ -195,67 +198,66 @@ async function createReservation(req, res) {
       phone,
       people: peopleCount,
       area,
+      status: 'pending',
+      createdAt: new Date(),
     });
 
     const saved = await newReservation.save();
     console.log('[RES] saved', saved._id);
 
-    // ---------- Notificações ----------
-    // Para depuração em produção: defina EMAIL_SYNC=true nas variáveis e o envio fica síncrono (mostra erro no log)
-    const shouldAwait = String(process.env.EMAIL_SYNC || 'false') === 'true';
+    // RESPONDE JÁ — não espera e-mail/whatsapp
+    res.status(202).json({
+      ok: true,
+      id: saved._id,
+      message: 'Pré-reserva registrada. O concierge vai entrar em contato para confirmar.',
+    });
+    console.log(`[RES] POST -> 202 in ${Date.now() - t0}ms id=${saved._id}`);
 
-    if (shouldAwait) {
-      const okEmail = await sendReservationEmail(saved);
-      console.log('[RES] email ok?', okEmail);
-    } else {
-      sendReservationEmail(saved)
-        .then((ok) => console.log('[RES] email ok?', ok))
-        .catch((err) => console.error('[RES] email erro:', err));
-    }
+    // Notificações em background
+    fireAndForget(async () => {
+      // e-mail
+      await sendReservationEmail(saved);
 
-    if (twilioClient && process.env.TWILIO_WHATSAPP_FROM && process.env.COMPANY_WHATSAPP_TO) {
-      const toNumber = String(process.env.COMPANY_WHATSAPP_TO).startsWith('whatsapp:')
-        ? process.env.COMPANY_WHATSAPP_TO
-        : `whatsapp:${process.env.COMPANY_WHATSAPP_TO}`;
+      // WhatsApp (Twilio), se configurado
+      if (twilioClient && process.env.TWILIO_WHATSAPP_FROM && process.env.COMPANY_WHATSAPP_TO) {
+        const toNumber = String(process.env.COMPANY_WHATSAPP_TO).startsWith('whatsapp:')
+          ? process.env.COMPANY_WHATSAPP_TO
+          : `whatsapp:${process.env.COMPANY_WHATSAPP_TO}`;
 
-      const messageBody =
-        `📅 *Nova Reserva*\n` +
-        `Nome: ${saved.name}\n` +
-        `Data: ${saved.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n` +
-        `Hora: ${saved.time}\n` +
-        `Telefone: ${saved.phone}\n` +
-        `Pessoas: ${saved.people}\n` +
-        `Área: ${saved.area}\n` +
-        `Criada em: ${tzDateBR(saved.createdAt)}`;
+        const messageBody =
+          `📅 *Nova Reserva*\n` +
+          `Nome: ${saved.name}\n` +
+          `Data: ${saved.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n` +
+          `Hora: ${saved.time}\n` +
+          `Telefone: ${saved.phone}\n` +
+          `Pessoas: ${saved.people}\n` +
+          `Área: ${saved.area}\n` +
+          `Criada em: ${tzDateBR(saved.createdAt)}`;
 
-      const sendWhatsApp = async () => {
         try {
           const resp = await twilioClient.messages.create({
             from: process.env.TWILIO_WHATSAPP_FROM,
             to: toNumber,
             body: messageBody,
           });
-          console.log('WhatsApp enviado com sucesso:', resp.sid);
-          return true;
+          console.log('WhatsApp enviado:', resp.sid);
         } catch (twErr) {
-          console.error('Erro ao enviar notificação via Twilio:', twErr);
-          return false;
+          console.error('Erro ao enviar WhatsApp via Twilio:', twErr);
         }
-      };
-
-      if (shouldAwait) {
-        const okWa = await sendWhatsApp();
-        console.log('[RES] whatsapp ok?', okWa);
       } else {
-        sendWhatsApp()
-          .then((okWa) => console.log('[RES] whatsapp ok?', okWa))
-          .catch((errWa) => console.error('[RES] whatsapp erro:', errWa));
+        console.warn('[TWILIO] Desabilitado (cliente nulo ou FROM/TO ausentes)');
       }
-    } else {
-      console.warn('[TWILIO] Desabilitado (cliente nulo ou FROM/TO ausentes)');
-    }
 
-    return res.status(201).json(saved);
+      // opcional: marcar como "notified"
+      try {
+        await Reservation.findByIdAndUpdate(saved._id, {
+          $set: { status: 'notified', notifiedAt: new Date() },
+        });
+      } catch (e) {
+        console.error('[RES] status update erro:', e);
+      }
+    });
+
   } catch (err) {
     console.error('Erro ao criar reserva:', err);
     return res.status(500).json({ error: 'Erro interno ao criar reserva' });
