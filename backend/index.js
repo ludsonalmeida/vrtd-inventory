@@ -30,14 +30,10 @@ const { authenticate } = require('./controllers/authController');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-/**
- * 1) Healthchecks simples (antes de tudo)
- */
+/* 1) Healthcheck MUITO cedo (o Railway usa isso pra checar se subiu) */
 app.get('/health', (req, res) => res.status(200).send('ok'));
 
-/**
- * 2) Conexão com MongoDB
- */
+/* 2) Conexão MongoDB */
 mongoose
   .connect(process.env.MONGODB_URI, {
     serverSelectionTimeoutMS: 15000,
@@ -47,35 +43,43 @@ mongoose
   .then(() => console.log('Conectado ao MongoDB'))
   .catch((err) => console.error('Erro ao conectar ao MongoDB:', err));
 
-/**
- * 3) Middlewares globais
- */
+/* 3) CORS GLOBAL — antes de qualquer rota */
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://sobradinhoporks.com.br',
+  'https://api.sobradinhoporks.com.br',
+];
+
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'https://sobradinhoporks.com.br',
-      'https://api.sobradinhoporks.com.br',
-    ],
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // permite curl/health sem Origin
+      return allowedOrigins.includes(origin)
+        ? cb(null, true)
+        : cb(new Error('Not allowed by CORS'));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
       'Authorization',
       'X-Requested-With',
-      // Se você NÃO envia X-Request-Id do front, pode remover esta linha:
+      // se você NÃO envia X-Request-Id do front, pode remover:
       'X-Request-Id',
     ],
-    credentials: true, // mantenha true só se realmente usar cookies cross-site
+    credentials: true, // deixe true só se usar cookies cross-site; caso contrário pode pôr false
     maxAge: 86400,
+    preflightContinue: false, // padrão: o próprio cors responde 204
   })
 );
 
+// Handler explícito pro preflight apenas sob /api/* (compatível com path-to-regexp)
+app.options('/api/*', cors());
+
+/* 4) Body parsers */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/**
- * 4) Rotas de diagnóstico (DEV) — antes do 404
- */
+/* 5) Rotas de diagnóstico */
 app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
@@ -115,9 +119,7 @@ app.get('/api/_mailtest', async (req, res) => {
   }
 });
 
-/**
- * 5) Rotas públicas
- */
+/* 6) Rotas públicas */
 app.use('/api/auth', authRoutes);
 app.use('/api/products/scan-invoice', scanRoute);
 app.use('/api/menu', menuPublicRoutes);
@@ -126,14 +128,10 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/estoque', estoqueRoutes);
 app.use('/api/reports', reportRoutes);
 
-/**
- * 6) Rotas protegidas — movimentos primeiro
- */
+/* 7) Rotas protegidas — movimentos primeiro */
 app.use('/api/stock/movements', authenticate, stockMovementRoutes);
 
-/**
- * 7) Rotas protegidas “genéricas” e demais módulos
- */
+/* 8) Rotas protegidas “genéricas” */
 app.use('/api/stock', authenticate, stockRoutes);
 app.use('/api/menu-items', authenticate, menuItemRoutes);
 app.use('/api/units', authenticate, unitRoutes);
@@ -142,29 +140,36 @@ app.use('/api/suppliers', authenticate, supplierRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/products', authenticate, productRoutes);
 
-/**
- * 8) Rota raiz
- */
+/* 9) Rota raiz */
 app.get('/', (req, res) => {
   res.send('API de Estoque rodando');
 });
 
-/**
- * 9) 404 e handler de erro
- */
+/* 10) 404 e handler de erro */
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
 app.use((err, req, res, next) => {
   console.error('Erro interno no servidor:', err);
+  // Garante CORS também em erros
+  if (req.headers.origin && allowedOrigins.includes(req.headers.origin)) {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.status(500).json({ error: 'Erro interno no servidor' });
 });
 
-/**
- * 10) Iniciar servidor (APENAS UMA VEZ!)
- */
+/* 11) Sobe o servidor — UMA vez, porta do Railway e 0.0.0.0 */
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API listening on ${PORT}`);
   console.log('Timezone corrente (servidor):', new Date().toLocaleString());
+});
+
+/* (Opcional) Log útil pra caçar problemas de latência/status */
+process.on('unhandledRejection', (e) => {
+  console.error('[unhandledRejection]', e);
+});
+process.on('uncaughtException', (e) => {
+  console.error('[uncaughtException]', e);
 });
