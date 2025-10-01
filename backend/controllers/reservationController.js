@@ -151,6 +151,8 @@ async function getReservationById(req, res) {
 
 // POST /api/reservations
 // -> grava rápido e responde 202; notificações seguem em background
+// POST /api/reservations
+// -> grava rápido e responde 202; notificações seguem em background
 async function createReservation(req, res) {
   const t0 = Date.now();
   try {
@@ -191,6 +193,33 @@ async function createReservation(req, res) {
       }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // NOVA REGRA: antecedência mínima de 2h para reservas HOJE
+    // (server já está com TZ=America/Sao_Paulo no index.js)
+    const [hh, mm] = time.split(':').map(Number);
+    const reservationDateTime = new Date(year, month - 1, day, hh, mm, 0, 0);
+    const now = new Date();
+    const isSameDay = reservationDateTime.toDateString() === now.toDateString();
+    const diffMin = Math.round((reservationDateTime.getTime() - now.getTime()) / 60000);
+
+    if (isSameDay) {
+      if (diffMin < 0) {
+        return res.status(400).json({ 
+          error: 'Esse horário já passou para hoje. Escolha outro horário.' 
+        });
+      }
+      if (diffMin < 120) {
+        // mensagem alinhada ao que você pediu + atalho do WhatsApp
+        return res.status(400).json({
+          error:
+            'Para reservas para hoje, precisamos de 2h de antecedência para confirmar. ' +
+            'Por favor, escolha um horário mais tarde ou confirme direto no WhatsApp: ' +
+            'https://wa.me/5561999999999?text=Quero%20confirmar%20minha%20pr%C3%A9-reserva%2C%20tive%20erro%20no%20site.'
+        });
+      }
+    }
+    // ─────────────────────────────────────────────────────────────
+
     const newReservation = new Reservation({
       date: parsedDate,
       time,
@@ -213,12 +242,9 @@ async function createReservation(req, res) {
     });
     console.log(`[RES] POST -> 202 in ${Date.now() - t0}ms id=${saved._id}`);
 
-    // Notificações em background
+    // Notificações em background (mantidas)
     fireAndForget(async () => {
-      // e-mail
       await sendReservationEmail(saved);
-
-      // WhatsApp (Twilio), se configurado
       if (twilioClient && process.env.TWILIO_WHATSAPP_FROM && process.env.COMPANY_WHATSAPP_TO) {
         const toNumber = String(process.env.COMPANY_WHATSAPP_TO).startsWith('whatsapp:')
           ? process.env.COMPANY_WHATSAPP_TO
@@ -248,7 +274,6 @@ async function createReservation(req, res) {
         console.warn('[TWILIO] Desabilitado (cliente nulo ou FROM/TO ausentes)');
       }
 
-      // opcional: marcar como "notified"
       try {
         await Reservation.findByIdAndUpdate(saved._id, {
           $set: { status: 'notified', notifiedAt: new Date() },
@@ -263,6 +288,7 @@ async function createReservation(req, res) {
     return res.status(500).json({ error: 'Erro interno ao criar reserva' });
   }
 }
+
 
 // PUT /api/reservations/:id
 async function updateReservation(req, res) {
