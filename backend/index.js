@@ -69,7 +69,7 @@ app.use(
     maxAge: 86400,
   })
 );
-app.options('/api/*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
