@@ -60,7 +60,7 @@ export default function HomePage() {
   const [contactOpen, setContactOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [successOpen, setSuccessOpen] = useState(false); // Overlay de sucesso
-  const [submitting, setSubmitting] = useState(false);   // <- NOVO: loading enquanto envia
+  const [submitting, setSubmitting] = useState(false);   // Loading enquanto envia
 
   useEffect(() => {
     setEvents(weeklyEvents);
@@ -79,7 +79,10 @@ export default function HomePage() {
   const nextEvent = () => setEventIndex(i => (i === events.length - 1 ? 0 : i + 1));
 
   // Modais
-  const handleOpenReservation = () => setReservationOpen(true);
+  const handleOpenReservation = () => {
+    setSuccessOpen(false);
+    setReservationOpen(true);
+  };
   const handleCloseReservation = () => setReservationOpen(false);
   const handleOpenContact = () => setContactOpen(true);
   const handleCloseContact = () => setContactOpen(false);
@@ -94,11 +97,42 @@ export default function HomePage() {
       .replace(/\s+/g, '') + '.jpg';
   }
 
-  // Envio de reserva (com loading)
+  // Helper: retry interno caso o services/api não tenha postRetry
+  const postWithRetryFallback = async (url, data, tries = 3, baseBackoff = 800) => {
+    let lastErr = null;
+    for (let attempt = 1; attempt <= tries; attempt++) {
+      try {
+        return await api.post(url, data);
+      } catch (err) {
+        lastErr = err;
+        const offline = typeof navigator !== 'undefined' && navigator && navigator.onLine === false;
+        if (offline) throw Object.assign(err, { userMessage: 'Você está sem conexão agora. Verifique sua internet e tente novamente.' });
+        // timeout, erro de rede (sem response) ou 5xx → tenta de novo
+        const isTimeout = err?.code === 'ECONNABORTED';
+        const noResponse = !err?.response;
+        const is5xx = err?.response?.status >= 500 && err?.response?.status < 600;
+        if ((isTimeout || noResponse || is5xx) && attempt < tries) {
+          const wait = (attempt - 1) * baseBackoff; // 0ms, 800ms, 1600ms...
+          await new Promise(r => setTimeout(r, wait));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr;
+  };
+
+  // Envio de reserva (com loading + retry + mensagens amigáveis)
   const handleReservationSubmit = async data => {
     try {
       setSubmitting(true); // abre overlay de loading
-      await api.post('/reservations', data);
+
+      // Tenta usar o utilitário do service (se existir); senão, fallback local
+      if (typeof api.postRetry === 'function') {
+        await api.postRetry('/reservations', data, null, { tries: 3, baseBackoff: 800 });
+      } else {
+        await postWithRetryFallback('/reservations', data, 3, 800);
+      }
 
       // Sucesso: fecha modal e abre overlay central com check animado
       setReservationOpen(false);
@@ -110,8 +144,31 @@ export default function HomePage() {
       }
     } catch (err) {
       console.error('[HomePage] Erro ao criar reserva:', err);
-      const msg = err.response?.data?.error || err.message || 'Erro ao salvar reserva';
+
+      // Mensagens amigáveis
+      let msg =
+        err.userMessage ||
+        err.response?.data?.error ||
+        (err.code === 'ECONNABORTED'
+          ? 'A conexão excedeu o tempo limite. Vamos tentar de novo em instantes.'
+          : err.message) ||
+        'Erro ao salvar sua pré-reserva.';
+
+      // Fallback por WhatsApp — ajuste o número/texto abaixo
+      const whatsapp = `https://wa.me/5561999999999?text=${encodeURIComponent(
+        'Quero confirmar minha pré-reserva, tive erro no site.'
+      )}`;
+      msg += ` Você também pode confirmar via WhatsApp: ${whatsapp}`;
+
       setSnackbar({ open: true, message: msg, severity: 'error' });
+
+      // Telemetria opcional
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'reserva_falhou', {
+          reason: err.code || err.name || 'unknown',
+          online: typeof navigator !== 'undefined' ? navigator.onLine : 'n/a',
+        });
+      }
     } finally {
       setSubmitting(false); // fecha overlay de loading
     }
