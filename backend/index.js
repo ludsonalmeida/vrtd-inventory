@@ -52,11 +52,20 @@ app.use(
       'https://sobradinhoporks.com.br',
       'https://api.sobradinhoporks.com.br',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Request-Id'
+    ],
+    credentials: true,   // mantenha true só se você realmente usa cookies/autent cross-site
+    maxAge: 86400,       // cache do preflight (1 dia)
   })
 );
+
+// garante que OPTIONS responda com os headers do cors
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

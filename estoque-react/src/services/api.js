@@ -20,11 +20,6 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) config.headers.Authorization = `Bearer ${token}`;
-
-    // opcional: um id de requisição simples (ajuda nos logs do backend)
-    if (!config.headers['X-Request-Id']) {
-      config.headers['X-Request-Id'] = Math.random().toString(36).slice(2);
-    }
     return config;
   },
   (error) => Promise.reject(error)
