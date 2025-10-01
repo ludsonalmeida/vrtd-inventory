@@ -1,7 +1,7 @@
 // backend/index.js
 require('dotenv').config();
 
-// Garante fuso “America/Sao_Paulo” se não estiver definido
+// Fuso horário padrão
 process.env.TZ = process.env.TZ || 'America/Sao_Paulo';
 
 const express = require('express');
@@ -31,7 +31,12 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 /**
- * 1) Conexão com MongoDB
+ * 1) Healthchecks simples (antes de tudo)
+ */
+app.get('/health', (req, res) => res.status(200).send('ok'));
+
+/**
+ * 2) Conexão com MongoDB
  */
 mongoose
   .connect(process.env.MONGODB_URI, {
@@ -43,7 +48,7 @@ mongoose
   .catch((err) => console.error('Erro ao conectar ao MongoDB:', err));
 
 /**
- * 2) Middlewares globais
+ * 3) Middlewares globais
  */
 app.use(
   cors({
@@ -57,21 +62,22 @@ app.use(
       'Content-Type',
       'Authorization',
       'X-Requested-With',
-      'X-Request-Id'
+      // Se você NÃO envia X-Request-Id do front, pode remover esta linha:
+      'X-Request-Id',
     ],
-    credentials: true,   // mantenha true só se você realmente usa cookies/autent cross-site
-    maxAge: 86400,       // cache do preflight (1 dia)
+    credentials: true, // mantenha true só se realmente usar cookies cross-site
+    maxAge: 86400,
   })
 );
 
-// garante que OPTIONS responda com os headers do cors
+// responde preflight corretamente
 app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * 3) Rotas de diagnóstico (DEV) — devem ficar ANTES do 404
+ * 4) Rotas de diagnóstico (DEV) — antes do 404
  */
 app.get('/api/health', (req, res) => {
   res.json({
@@ -100,9 +106,7 @@ app.get('/api/_mailtest', async (req, res) => {
 
     const info = await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to:
-        process.env.EMAIL_TO ||
-        'ludson.bsa@gmail.com,porks.sobradinho@gmail.com',
+      to: process.env.EMAIL_TO || 'ludson.bsa@gmail.com,porks.sobradinho@gmail.com',
       subject: 'Teste SMTP — PROD',
       text: 'Envio funcionando na produção ✔️',
     });
@@ -115,7 +119,7 @@ app.get('/api/_mailtest', async (req, res) => {
 });
 
 /**
- * 4) Rotas públicas
+ * 5) Rotas públicas
  */
 app.use('/api/auth', authRoutes);
 app.use('/api/products/scan-invoice', scanRoute);
@@ -126,12 +130,12 @@ app.use('/api/estoque', estoqueRoutes);
 app.use('/api/reports', reportRoutes);
 
 /**
- * 5) Rotas protegidas de estoque MOVEMENTS (primeiro)
+ * 6) Rotas protegidas — movimentos primeiro
  */
 app.use('/api/stock/movements', authenticate, stockMovementRoutes);
 
 /**
- * 6) Rotas protegidas de estoque “genéricas” e demais módulos
+ * 7) Rotas protegidas “genéricas” e demais módulos
  */
 app.use('/api/stock', authenticate, stockRoutes);
 app.use('/api/menu-items', authenticate, menuItemRoutes);
@@ -142,31 +146,28 @@ app.use('/api/users', authenticate, userRoutes);
 app.use('/api/products', authenticate, productRoutes);
 
 /**
- * 7) Rota raiz
+ * 8) Rota raiz
  */
 app.get('/', (req, res) => {
   res.send('API de Estoque rodando');
 });
 
 /**
- * 8) 404 para rotas não encontradas — deve ficar por último, antes do handler de erro
+ * 9) 404 e handler de erro
  */
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-/**
- * 9) Middleware de erro genérico
- */
 app.use((err, req, res, next) => {
   console.error('Erro interno no servidor:', err);
   res.status(500).json({ error: 'Erro interno no servidor' });
 });
 
 /**
- * 10) Iniciar servidor
+ * 10) Iniciar servidor (APENAS UMA VEZ!)
  */
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`API listening on ${PORT}`);
   console.log('Timezone corrente (servidor):', new Date().toLocaleString());
 });
