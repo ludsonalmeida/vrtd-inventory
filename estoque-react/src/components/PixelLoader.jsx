@@ -32,7 +32,10 @@ export default function PixelLoader() {
     // Inicializa e dispara PageView
     window.fbq('init', '2431106123757946');
     window.fbq('track', 'PageView');
-  }, []);
+  },
+  
+  []);
+  
 
   // Não renderiza nada em tela
   return null;
