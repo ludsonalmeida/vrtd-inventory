@@ -29,21 +29,53 @@ export default function ReservationsPage() {
   const BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    async function load() {
+    async function loadAll() {
+      setLoading(true);
       try {
-        const res = await fetch(`${BASE_URL}/api/reservations`);
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const data = await res.json();
-        console.log('API Response:', data); // Log para depuração
-        setReservations(Array.isArray(data.data) ? data.data : []); // Garante que seja um array válido
+        const PAGE_SIZE = 200; // ajuste se quiser
+        let page = 1;
+        let pageCount = 1;
+        const all = [];
+
+        // primeira chamada para obter pageCount
+        const firstRes = await fetch(
+          `${BASE_URL}/api/reservations?pagination[page]=${page}&pagination[pageSize]=${PAGE_SIZE}`
+        );
+        if (!firstRes.ok) throw new Error(`Status ${firstRes.status}`);
+        const firstData = await firstRes.json();
+
+        const firstList = Array.isArray(firstData.data) ? firstData.data : [];
+        all.push(...firstList);
+
+        // tenta ler metadados de paginação do Strapi v4
+        const meta = firstData?.meta?.pagination;
+        pageCount = meta?.pageCount ?? 1;
+
+        // busca as próximas páginas (se houver)
+        while (page < pageCount) {
+          page += 1;
+          const res = await fetch(
+            `${BASE_URL}/api/reservations?pagination[page]=${page}&pagination[pageSize]=${PAGE_SIZE}`
+          );
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          const data = await res.json();
+          const list = Array.isArray(data.data) ? data.data : [];
+          all.push(...list);
+        }
+
+        // opcional: ordenar (ex.: mais recente primeiro por createdAt)
+        all.sort((a, b) => new Date(b?.createdAt ?? b?.attributes?.createdAt ?? 0) - new Date(a?.createdAt ?? a?.attributes?.createdAt ?? 0));
+
+        setReservations(all);
       } catch (err) {
-        console.error('Erro ao carregar reservas:', err);
+        console.error('Erro ao carregar reservas (todas páginas):', err);
+        setReservations([]);
       } finally {
         setLoading(false);
       }
     }
-    load();
-  }, []);
+    loadAll();
+  }, [BASE_URL]);
 
   const openNew    = () => { setSelected(null); setModalOpen(true); };
   const openEdit   = (r)  => { setSelected(r);  setModalOpen(true); };
@@ -51,7 +83,7 @@ export default function ReservationsPage() {
 
   const handleSubmit = async (formData) => {
     const url    = selected
-      ? `${BASE_URL}/api/reservations/${selected._id}`
+      ? `${BASE_URL}/api/reservations/${selected._id || selected.id}`
       : `${BASE_URL}/api/reservations`;
     const method = selected ? 'PUT' : 'POST';
 
@@ -67,21 +99,28 @@ export default function ReservationsPage() {
         return;
       }
       const saved = await res.json();
-      setReservations(prev =>
-        selected ? prev.map(item => item._id === saved._id ? saved : item)
-                 : [saved, ...prev]
-      );
+      // Se o backend for Strapi, saved.data é o item; senão, use saved direto
+      const savedItem = saved?.data ?? saved;
+
+      setReservations(prev => {
+        const getId = (x) => x._id || x.id;
+        if (selected) {
+          return prev.map(item => getId(item) === getId(savedItem) ? savedItem : item);
+        }
+        return [savedItem, ...prev];
+      });
     } catch (err) {
       console.error('Erro ao salvar reserva:', err);
     }
   };
 
   const handleDelete = async (id) => {
+    const realId = id || (typeof id === 'object' ? id._id || id.id : id);
     if (!window.confirm('Confirmar exclusão?')) return;
     try {
-      const res = await fetch(`${BASE_URL}/api/reservations/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${BASE_URL}/api/reservations/${realId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`Status ${res.status}`);
-      setReservations(prev => prev.filter(r => r._id !== id));
+      setReservations(prev => prev.filter(r => (r._id || r.id) !== realId));
     } catch (err) {
       console.error('Erro ao excluir reserva:', err);
     }
@@ -119,29 +158,33 @@ export default function ReservationsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Array.isArray(reservations) && reservations.map(r => (
-              <TableRow key={r._id} hover>
-                <TableCell>{new Date(r.createdAt).toLocaleString('pt-BR')}</TableCell>
-                <TableCell>{new Date(r.date).toLocaleDateString()}</TableCell>
-                <TableCell>{r.time}</TableCell>
-                <TableCell>{r.name}</TableCell>
-                <TableCell>{r.phone}</TableCell>
-                <TableCell>{r.people}</TableCell>
-                <TableCell>{r.area}</TableCell>
-                <TableCell align="right">
-                  <IconButton size="small" onClick={() => openEdit(r)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(r._id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {Array.isArray(reservations) && reservations.map(r => {
+              // compat: Strapi v4 (r.attributes) ou objeto plano
+              const attrs = r.attributes ?? r;
+              return (
+                <TableRow key={r._id || r.id} hover>
+                  <TableCell>{new Date(attrs.createdAt).toLocaleString('pt-BR')}</TableCell>
+                  <TableCell>{attrs.date ? new Date(attrs.date).toLocaleDateString('pt-BR') : ''}</TableCell>
+                  <TableCell>{attrs.time}</TableCell>
+                  <TableCell>{attrs.name}</TableCell>
+                  <TableCell>{attrs.phone}</TableCell>
+                  <TableCell>{attrs.people}</TableCell>
+                  <TableCell>{attrs.area}</TableCell>
+                  <TableCell align="right">
+                    <IconButton size="small" onClick={() => openEdit(r)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDelete(r._id || r.id)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -150,7 +193,7 @@ export default function ReservationsPage() {
         open={modalOpen}
         onClose={closeModal}
         onSubmit={handleSubmit}
-        initialData={selected}
+        initialData={selected?.attributes ?? selected}
       />
     </Container>
   );
