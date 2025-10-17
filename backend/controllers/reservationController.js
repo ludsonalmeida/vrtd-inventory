@@ -84,9 +84,9 @@ async function sendReservationEmail(reservationDoc) {
       <li><b>Pessoas:</b> ${reservationDoc.people || '-'}</li>
       <li><b>Área:</b> ${reservationDoc.area || '-'}</li>
       <li><b>Criada em:</b> ${new Date(reservationDoc.createdAt || Date.now()).toLocaleString(
-    'pt-BR',
-    { timeZone: 'America/Sao_Paulo' }
-  )}</li>
+        'pt-BR',
+        { timeZone: 'America/Sao_Paulo' }
+      )}</li>
       <li><b>ID:</b> ${reservationDoc._id}</li>
     </ul>
   `;
@@ -119,52 +119,33 @@ function fireAndForget(fn) {
 // Lista reservas com paginação: usa ?page=1&limit=10
 async function getAllReservations(req, res) {
   try {
-    const wantAll =
-      String(req.query.all || '').toLowerCase() === '1' ||
-      String(req.query.all || '').toLowerCase() === 'true';
-
-    const total = await Reservation.countDocuments();
-
-    if (wantAll) {
-      // Sem paginação: traz tudo
-      const list = await Reservation.find()
-        .sort({ createdAt: -1 })
-        .lean()
-        .exec();
-
-      return res.json({
-        data: list,
-        meta: { total, page: 1, limit: total, pages: 1, all: true },
-      });
-    }
-
-    // Paginação (com limite máximo de segurança)
-    const MAX_LIMIT = Number(process.env.MAX_PAGE_LIMIT || 1000);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const rawLimit = Math.max(1, parseInt(req.query.limit, 10) || 10);
-    const limit = Math.min(rawLimit, MAX_LIMIT);
+    const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
     const skip = (page - 1) * limit;
-
-    const list = await Reservation.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .exec();
-
+    const total = await Reservation.countDocuments();
+    const list = await Reservation.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
     return res.json({
       data: list,
-      meta: {
-        total,
-        page,
-        limit,
-        pages: Math.max(1, Math.ceil(total / limit)),
-        all: false,
-      },
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
     });
   } catch (err) {
     console.error('Erro ao buscar reservas:', err);
     return res.status(500).json({ error: 'Erro ao buscar reservas' });
+  }
+}
+
+// GET /api/reservations/:id
+async function getReservationById(req, res) {
+  try {
+    const { id } = req.params;
+    const item = await Reservation.findById(id).exec();
+    if (!item) {
+      return res.status(404).json({ error: 'Reserva não encontrada' });
+    }
+    return res.json(item);
+  } catch (err) {
+    console.error('Erro ao buscar reserva:', err);
+    return res.status(500).json({ error: 'Erro ao buscar reserva' });
   }
 }
 
@@ -202,16 +183,7 @@ async function createReservation(req, res) {
       return res.status(400).json({ error: 'Área de preferência inválida' });
     }
 
-    let peopleCount;
-    if (people === '10+') {
-      peopleCount = 11;
-    } else {
-      peopleCount = Number(people);
-      if (isNaN(peopleCount) || peopleCount < 1) {
-        return res.status(400).json({ error: 'Número de pessoas inválido' });
-      }
-    }
-
+  
     // ─────────────────────────────────────────────────────────────
     // NOVA REGRA: antecedência mínima de 2h para reservas HOJE
     // (server já está com TZ=America/Sao_Paulo no index.js)
@@ -223,8 +195,8 @@ async function createReservation(req, res) {
 
     if (isSameDay) {
       if (diffMin < 0) {
-        return res.status(400).json({
-          error: 'Esse horário já passou para hoje. Escolha outro horário.'
+        return res.status(400).json({ 
+          error: 'Esse horário já passou para hoje. Escolha outro horário.' 
         });
       }
       if (diffMin < 120) {
