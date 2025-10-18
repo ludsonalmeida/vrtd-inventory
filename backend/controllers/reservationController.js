@@ -5,11 +5,6 @@ require('dotenv').config();
 const Reservation = require('../models/Reservation');
 const nodemailer = require('nodemailer');
 
-const twilioClient =
-  process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-    ? require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-    : null;
-
 // ---------- Helpers: Email ----------
 function buildTransport() {
   const host = process.env.EMAIL_HOST;
@@ -25,10 +20,7 @@ function buildTransport() {
     console.warn('[EMAIL] EMAIL_HOST ausente — usando preset "gmail"');
     return nodemailer.createTransport({
       service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
     });
   }
 
@@ -36,10 +28,7 @@ function buildTransport() {
     host,
     port,
     secure,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
   });
 }
 
@@ -106,27 +95,56 @@ function tzDateBR(date) {
   return new Date(date || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
-// dispara tarefa sem bloquear a resposta
 function fireAndForget(fn) {
   setImmediate(async () => {
     try { await fn(); } catch (e) { console.error('[reservation bg job]', e); }
   });
 }
 
+function toBRDateString(d) {
+  try {
+    return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  } catch {
+    return '-';
+  }
+}
+
 // ---------- Controllers ----------
 
 // GET /api/reservations
-// Lista reservas com paginação: usa ?page=1&limit=10
+// Suporta: ?page=1&limit=10  OU  ?pagination[page]=1&pagination[pageSize]=200
 async function getAllReservations(req, res) {
   try {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
+    // compat com estilo Strapi v4
+    const hasStrapiStyle =
+      req.query['pagination[page]'] || req.query['pagination[pageSize]'];
+
+    const page = Math.max(
+      1,
+      parseInt(hasStrapiStyle ? req.query['pagination[page]'] : req.query.page, 10) || 1
+    );
+    const limit = Math.max(
+      1,
+      parseInt(hasStrapiStyle ? req.query['pagination[page]]'] : req.query.limit, 10) || 10
+    );
+
     const skip = (page - 1) * limit;
     const total = await Reservation.countDocuments();
-    const list = await Reservation.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
+    const list = await Reservation.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
     return res.json({
       data: list,
-      meta: { total, page, limit, pages: Math.ceil(total / limit) },
+      meta: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+        pagination: { page, pageSize: limit, pageCount: Math.ceil(total / limit) },
+      },
     });
   } catch (err) {
     console.error('Erro ao buscar reservas:', err);
@@ -150,9 +168,10 @@ async function getReservationById(req, res) {
 }
 
 // POST /api/reservations
-// -> grava rápido e responde 202; notificações seguem em background
+// ► Permite reserva para HOJE mesmo com menos de 2h.
+//   Se < 120min, devolve `needsFastConfirm: true` + `waLink` (wa.me) para o cliente abrir o WhatsApp.
 // POST /api/reservations
-// -> grava rápido e responde 202; notificações seguem em background
+// ► Permite HOJE mesmo com <2h; responde waLink com mensagem pronta.
 async function createReservation(req, res) {
   const t0 = Date.now();
   try {
@@ -160,64 +179,72 @@ async function createReservation(req, res) {
 
     const { date, time, name, phone, people, area } = req.body;
 
+    // --------- validações de presença ---------
     if (!date || !time || !name || !phone || !people || !area) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     }
 
+    // --------- data (YYYY-MM-DD) ---------
     const [year, month, day] = String(date).split('-').map(Number);
     const parsedDate = new Date(year, month - 1, day);
     if (isNaN(parsedDate)) {
       return res.status(400).json({ error: 'Data inválida' });
     }
 
+    // --------- hora (HH:mm) ---------
     if (!/^\d{2}:\d{2}$/.test(time)) {
       return res.status(400).json({ error: 'Horário inválido (HH:mm)' });
     }
 
-    if (!/^\(\d{2}\) \d{4,5}-\d{4}$/.test(phone)) {
-      return res.status(400).json({ error: 'Telefone inválido. Use (DD) NNNNN-NNNN' });
+    // --------- telefone (10 ou 11 dígitos) ---------
+    const phoneDigits = String(phone).replace(/\D/g, '');
+    if (!(phoneDigits.length === 10 || phoneDigits.length === 11)) {
+      return res.status(400).json({ error: 'Telefone inválido. Informe DDD + número (10 ou 11 dígitos)' });
+    }
+    const phoneFormatted = phoneDigits.length === 11
+      ? `(${phoneDigits.slice(0,2)}) ${phoneDigits.slice(2,7)}-${phoneDigits.slice(7)}`
+      : `(${phoneDigits.slice(0,2)}) ${phoneDigits.slice(2,6)}-${phoneDigits.slice(6)}`;
+
+    // --------- pessoas ---------
+    const peopleNum = people === '10+' ? 11 : Number(people);
+    if (!Number.isFinite(peopleNum) || peopleNum < 1) {
+      return res.status(400).json({ error: 'Número de pessoas inválido' });
     }
 
-    const validAreas = ['Coberta', 'Descoberta', 'Porks Deck'];
-    if (!validAreas.includes(area)) {
+    // --------- área: NORMALIZAÇÃO CANÔNICA ---------
+    const CANON = ['Coberta', 'Descoberta', 'Porks Deck'];
+    const ALIASES = {
+      'deck': 'Porks Deck', 'porks deck': 'Porks Deck',
+      'externa': 'Descoberta', 'exterior': 'Descoberta', 'ao ar livre': 'Descoberta', 'fora': 'Descoberta',
+      'coberta': 'Coberta', 'descoberta': 'Descoberta'
+    };
+    const rawArea = String(area).trim();
+    const areaNorm = CANON.includes(rawArea)
+      ? rawArea
+      : (ALIASES[rawArea.toLowerCase()] || rawArea);
+    if (!CANON.includes(areaNorm)) {
       return res.status(400).json({ error: 'Área de preferência inválida' });
     }
 
-  
-    // ─────────────────────────────────────────────────────────────
-    // NOVA REGRA: antecedência mínima de 2h para reservas HOJE
-    // (server já está com TZ=America/Sao_Paulo no index.js)
+    // --------- regra HOJE (<2h) -> apenas flag para confirmar rápido ---------
     const [hh, mm] = time.split(':').map(Number);
     const reservationDateTime = new Date(year, month - 1, day, hh, mm, 0, 0);
     const now = new Date();
     const isSameDay = reservationDateTime.toDateString() === now.toDateString();
     const diffMin = Math.round((reservationDateTime.getTime() - now.getTime()) / 60000);
-
-    if (isSameDay) {
-      if (diffMin < 0) {
-        return res.status(400).json({ 
-          error: 'Esse horário já passou para hoje. Escolha outro horário.' 
-        });
-      }
-      if (diffMin < 120) {
-        // mensagem alinhada ao que você pediu + atalho do WhatsApp
-        return res.status(400).json({
-          error:
-            'Para reservas para hoje, precisamos de 2h de antecedência para confirmar. ' +
-            'Por favor, escolha um horário mais tarde ou confirme direto no WhatsApp: ' +
-            'https://wa.me/5561999999999?text=Quero%20confirmar%20minha%20pr%C3%A9-reserva%2C%20tive%20erro%20no%20site.'
-        });
-      }
+    const needsFastConfirm = isSameDay && diffMin < 120;
+    if (isSameDay && diffMin < 0) {
+      return res.status(400).json({ error: 'Esse horário já passou para hoje. Escolha outro horário.' });
     }
-    // ─────────────────────────────────────────────────────────────
 
+    // --------- cria doc ---------
     const newReservation = new Reservation({
       date: parsedDate,
       time,
       name: String(name).trim(),
-      phone,
-      people: peopleCount,
-      area,
+      phone: phoneFormatted,
+      people: peopleNum,
+      area: areaNorm,         // ✅ sempre canônico
       status: 'pending',
       createdAt: new Date(),
     });
@@ -225,61 +252,57 @@ async function createReservation(req, res) {
     const saved = await newReservation.save();
     console.log('[RES] saved', saved._id);
 
-    // RESPONDE JÁ — não espera e-mail/whatsapp
+    // --------- monta waLink com mensagem pronta ---------
+    const toBR = (d) => d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const whenDateBR = toBR(parsedDate);
+    const msg =
+      `Ola, acabei de fazer minha pre reserva no site para "${whenDateBR}" ` +
+      `${time} e ${peopleNum} Pessoas em nome de ${String(name).trim()}, pode confirmar?`;
+    const waTo = '5561935003917';
+    const waLink = `https://wa.me/${waTo}?text=${encodeURIComponent(msg)}`;
+
+    // --------- responde 202 + waLink ---------
     res.status(202).json({
       ok: true,
       id: saved._id,
-      message: 'Pré-reserva registrada. O concierge vai entrar em contato para confirmar.',
+      message: needsFastConfirm
+        ? 'Pré-reserva registrada! Para hoje com menos de 2h, confirme rapidamente no WhatsApp.'
+        : 'Pré-reserva registrada. Nosso concierge vai confirmar em breve.',
+      needsFastConfirm,
+      waLink,
     });
     console.log(`[RES] POST -> 202 in ${Date.now() - t0}ms id=${saved._id}`);
 
-    // Notificações em background (mantidas)
-    fireAndForget(async () => {
-      await sendReservationEmail(saved);
-      if (twilioClient && process.env.TWILIO_WHATSAPP_FROM && process.env.COMPANY_WHATSAPP_TO) {
-        const toNumber = String(process.env.COMPANY_WHATSAPP_TO).startsWith('whatsapp:')
-          ? process.env.COMPANY_WHATSAPP_TO
-          : `whatsapp:${process.env.COMPANY_WHATSAPP_TO}`;
-
-        const messageBody =
-          `📅 *Nova Reserva*\n` +
-          `Nome: ${saved.name}\n` +
-          `Data: ${saved.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n` +
-          `Hora: ${saved.time}\n` +
-          `Telefone: ${saved.phone}\n` +
-          `Pessoas: ${saved.people}\n` +
-          `Área: ${saved.area}\n` +
-          `Criada em: ${tzDateBR(saved.createdAt)}`;
-
-        try {
-          const resp = await twilioClient.messages.create({
-            from: process.env.TWILIO_WHATSAPP_FROM,
-            to: toNumber,
-            body: messageBody,
-          });
-          console.log('WhatsApp enviado:', resp.sid);
-        } catch (twErr) {
-          console.error('Erro ao enviar WhatsApp via Twilio:', twErr);
-        }
-      } else {
-        console.warn('[TWILIO] Desabilitado (cliente nulo ou FROM/TO ausentes)');
-      }
-
+    // --------- e-mail em background (não bloqueia a resposta) ---------
+    setImmediate(async () => {
       try {
-        await Reservation.findByIdAndUpdate(saved._id, {
-          $set: { status: 'notified', notifiedAt: new Date() },
-        });
+        await sendReservationEmail(saved);
       } catch (e) {
-        console.error('[RES] status update erro:', e);
+        console.error('[EMAIL] falhou (ignorado para o cliente):', e);
       }
     });
 
   } catch (err) {
     console.error('Erro ao criar reserva:', err);
+
+    // Mongoose validation
+    if (err?.name === 'ValidationError') {
+      const details = Object.values(err.errors).map(e => e.message).join('; ');
+      return res.status(400).json({ error: `Validação: ${details}` });
+    }
+    // Mongo offline / seleção de servidor
+    if (err?.name === 'MongoServerSelectionError' || err?.name === 'MongoNetworkError') {
+      return res.status(503).json({ error: 'Banco de dados indisponível. Tente novamente.' });
+    }
+    // Duplicidade (se houver índice único)
+    if (err?.code === 11000) {
+      return res.status(409).json({ error: 'Conflito: registro duplicado.' });
+    }
+
+    // Fallback
     return res.status(500).json({ error: 'Erro interno ao criar reserva' });
   }
 }
-
 
 // PUT /api/reservations/:id
 async function updateReservation(req, res) {
@@ -302,19 +325,39 @@ async function updateReservation(req, res) {
       updateData.time = time;
     }
     if (name) updateData.name = String(name).trim();
+
     if (phone) {
-      if (!/^\(\d{2}\) \d{4,5}-\d{4}$/.test(phone)) {
-        return res.status(400).json({ error: 'Telefone inválido. Use (DD) NNNNN-NNNN' });
+      const digits = String(phone).replace(/\D/g, '');
+      if (!(digits.length === 10 || digits.length === 11)) {
+        return res.status(400).json({ error: 'Telefone inválido. Informe DDD + número (10 ou 11 dígitos)' });
       }
-      updateData.phone = phone;
+      updateData.phone = digits.length === 11
+        ? `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`
+        : `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
     }
-    if (people) updateData.people = people === '10+' ? 11 : Number(people);
+
+    if (people) {
+      const p = people === '10+' ? 11 : Number(people);
+      if (!Number.isFinite(p) || p < 1) {
+        return res.status(400).json({ error: 'Número de pessoas inválido' });
+      }
+      updateData.people = p;
+    }
+
     if (area) {
-      const validAreas = ['Coberta', 'Descoberta', 'Porks Deck'];
-      if (!validAreas.includes(area)) {
+      const validAreas = ['Coberta', 'Descoberta', 'Porks Deck', 'Deck', 'Externa', 'Área Externa'];
+      const mapAliases = {
+        'deck': 'Porks Deck',
+        'externa': 'Descoberta',
+        'exterior': 'Descoberta',
+        'ao ar livre': 'Descoberta',
+      };
+      const lower = String(area).trim().toLowerCase();
+      const areaNorm = validAreas.includes(area) ? area : (mapAliases[lower] || area);
+      if (!validAreas.includes(areaNorm)) {
         return res.status(400).json({ error: 'Área de preferência inválida' });
       }
-      updateData.area = area;
+      updateData.area = areaNorm;
     }
 
     const updated = await Reservation.findByIdAndUpdate(id, updateData, {
