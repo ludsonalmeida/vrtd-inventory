@@ -47,9 +47,9 @@ export default function ReservationsPage() {
         const firstList = Array.isArray(firstData.data) ? firstData.data : [];
         all.push(...firstList);
 
-        // tenta ler metadados de paginação do Strapi v4
-        const meta = firstData?.meta?.pagination;
-        pageCount = meta?.pageCount ?? 1;
+        // metadados (compat backend custom)
+        const meta = firstData?.meta?.pagination || firstData?.meta;
+        pageCount = meta?.pageCount ?? meta?.pages ?? 1;
 
         // busca as próximas páginas (se houver)
         while (page < pageCount) {
@@ -63,8 +63,12 @@ export default function ReservationsPage() {
           all.push(...list);
         }
 
-        // opcional: ordenar (ex.: mais recente primeiro por createdAt)
-        all.sort((a, b) => new Date(b?.createdAt ?? b?.attributes?.createdAt ?? 0) - new Date(a?.createdAt ?? a?.attributes?.createdAt ?? 0));
+        // ordenar por createdAt desc (compat: objeto simples ou estilo Strapi)
+        all.sort((a, b) => {
+          const aC = a?.createdAt ?? a?.attributes?.createdAt ?? 0;
+          const bC = b?.createdAt ?? b?.attributes?.createdAt ?? 0;
+          return new Date(bC) - new Date(aC);
+        });
 
         setReservations(all);
       } catch (err) {
@@ -93,14 +97,16 @@ export default function ReservationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
+
       if (!res.ok) {
-        const errBody = await res.text();
-        console.error('Erro ao salvar reserva:', res.status, errBody);
+        const errText = await res.text();
+        console.error('[ReservationsPage] Erro ao salvar reserva:', res.status, errText);
+        alert(`Erro ${res.status}: ${errText}`);
         return;
       }
+
       const saved = await res.json();
-      // Se o backend for Strapi, saved.data é o item; senão, use saved direto
-      const savedItem = saved?.data ?? saved;
+      const savedItem = saved?.data ?? saved; // compat
 
       setReservations(prev => {
         const getId = (x) => x._id || x.id;
@@ -109,13 +115,15 @@ export default function ReservationsPage() {
         }
         return [savedItem, ...prev];
       });
+      closeModal();
     } catch (err) {
       console.error('Erro ao salvar reserva:', err);
+      alert('Falha ao salvar reserva. Veja o console para detalhes.');
     }
   };
 
   const handleDelete = async (id) => {
-    const realId = id || (typeof id === 'object' ? id._id || id.id : id);
+    const realId = typeof id === 'object' ? id._id || id.id : id;
     if (!window.confirm('Confirmar exclusão?')) return;
     try {
       const res = await fetch(`${BASE_URL}/api/reservations/${realId}`, { method: 'DELETE' });
@@ -123,6 +131,7 @@ export default function ReservationsPage() {
       setReservations(prev => prev.filter(r => (r._id || r.id) !== realId));
     } catch (err) {
       console.error('Erro ao excluir reserva:', err);
+      alert('Falha ao excluir reserva.');
     }
   };
 
@@ -159,11 +168,11 @@ export default function ReservationsPage() {
           </TableHead>
           <TableBody>
             {Array.isArray(reservations) && reservations.map(r => {
-              // compat: Strapi v4 (r.attributes) ou objeto plano
               const attrs = r.attributes ?? r;
+              const rowId = r._id || r.id;
               return (
-                <TableRow key={r._id || r.id} hover>
-                  <TableCell>{new Date(attrs.createdAt).toLocaleString('pt-BR')}</TableCell>
+                <TableRow key={rowId} hover>
+                  <TableCell>{attrs.createdAt ? new Date(attrs.createdAt).toLocaleString('pt-BR') : ''}</TableCell>
                   <TableCell>{attrs.date ? new Date(attrs.date).toLocaleDateString('pt-BR') : ''}</TableCell>
                   <TableCell>{attrs.time}</TableCell>
                   <TableCell>{attrs.name}</TableCell>
@@ -177,7 +186,7 @@ export default function ReservationsPage() {
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={() => handleDelete(r._id || r.id)}
+                      onClick={() => handleDelete(rowId)}
                     >
                       <DeleteIcon />
                     </IconButton>
