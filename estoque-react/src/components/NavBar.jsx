@@ -65,10 +65,9 @@ export default function NavBar() {
           return (
             <Button
               key={item.id}
-              component="a"
-              href="https://reservas.sobradinhoporks.com.br"
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => {
+                window.location.href = 'https://reservas.sobradinhoporks.com.br';
+              }}
               sx={{
                 color: '#333',
                 backgroundColor: 'transparent',
@@ -110,8 +109,8 @@ export default function NavBar() {
         onClick={toggleDrawer}
         sx={{
           color: '#333',
-          ml: 3, // margem esquerda maior
-          mr: 2, // margem direita também (respiro da borda)
+          ml: 3,
+          mr: 2,
           mt: 1,
           p: 1.5,
           borderRadius: 2,
@@ -135,11 +134,10 @@ export default function NavBar() {
                   <ListItem
                     button
                     key={item.id}
-                    component="a"
-                    href="https://reservas.sobradinhoporks.com.br"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={() => {
+                      setDrawerOpen(false);
+                      window.location.href = 'https://reservas.sobradinhoporks.com.br';
+                    }}
                     sx={{
                       color: '#333',
                       fontFamily: 'Alfa Slab One',

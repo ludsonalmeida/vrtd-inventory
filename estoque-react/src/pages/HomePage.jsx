@@ -80,9 +80,8 @@ export default function HomePage() {
 
   // Modais
   const handleOpenReservation = () => {
-    setSuccessOpen(false);
-    setReservationOpen(true);
-  };
+  window.location.href = 'https://reservas.sobradinhoporks.com.br';
+};
   const handleCloseReservation = () => setReservationOpen(false);
   const handleOpenContact = () => setContactOpen(true);
   const handleCloseContact = () => setContactOpen(false);
