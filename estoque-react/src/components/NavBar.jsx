@@ -58,22 +58,48 @@ export default function NavBar() {
 
   const renderDesktopMenu = () => (
     <Box sx={{ display: 'flex', gap: 2, marginLeft: 'auto' }}>
-      {navItems.map(item => (
-        <Button
-          key={item.id}
-          onClick={() => handleNav(item.id)}
-          sx={{
-            color: '#333',
-            backgroundColor: 'transparent',
-            fontFamily: 'Alfa Slab One',
-            fontWeight: 400,
-            textTransform: 'none',
-            '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
-          }}
-        >
-          {item.label}
-        </Button>
-      ))}
+      {navItems.map(item => {
+        const isReserva = item.id === 'reserva';
+
+        if (isReserva) {
+          return (
+            <Button
+              key={item.id}
+              component="a"
+              href="https://reservas.sobradinhoporks.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: '#333',
+                backgroundColor: 'transparent',
+                fontFamily: 'Alfa Slab One',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+              }}
+            >
+              {item.label}
+            </Button>
+          );
+        }
+
+        return (
+          <Button
+            key={item.id}
+            onClick={() => handleNav(item.id)}
+            sx={{
+              color: '#333',
+              backgroundColor: 'transparent',
+              fontFamily: 'Alfa Slab One',
+              fontWeight: 400,
+              textTransform: 'none',
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+            }}
+          >
+            {item.label}
+          </Button>
+        );
+      })}
     </Box>
   );
 
@@ -98,33 +124,66 @@ export default function NavBar() {
         <MenuIcon fontSize="large" />
       </IconButton>
 
-
       <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer}>
         <Box sx={{ width: 240, bgcolor: '#F59E0B' }} role="presentation">
           <List>
-            {navItems.map(item => (
-              <ListItem
-                button
-                key={item.id}
-                onClick={() => handleNav(item.id)}
-                sx={{
-                  color: '#333',
-                  fontFamily: 'Alfa Slab One',
-                  fontWeight: 400,
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
-                }}
-              >
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{
+            {navItems.map(item => {
+              const isReserva = item.id === 'reserva';
+
+              if (isReserva) {
+                return (
+                  <ListItem
+                    button
+                    key={item.id}
+                    component="a"
+                    href="https://reservas.sobradinhoporks.com.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setDrawerOpen(false)}
+                    sx={{
+                      color: '#333',
+                      fontFamily: 'Alfa Slab One',
+                      fontWeight: 400,
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
+                    }}
+                  >
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontFamily: 'Alfa Slab One',
+                        fontWeight: 400,
+                        fontSize: '1rem',
+                        color: '#333',
+                      }}
+                    />
+                  </ListItem>
+                );
+              }
+
+              return (
+                <ListItem
+                  button
+                  key={item.id}
+                  onClick={() => handleNav(item.id)}
+                  sx={{
+                    color: '#333',
                     fontFamily: 'Alfa Slab One',
                     fontWeight: 400,
-                    fontSize: '1rem',
-                    color: '#333',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
                   }}
-                />
-              </ListItem>
-            ))}
+                >
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontFamily: 'Alfa Slab One',
+                      fontWeight: 400,
+                      fontSize: '1rem',
+                      color: '#333',
+                    }}
+                  />
+                </ListItem>
+              );
+            })}
           </List>
         </Box>
       </Drawer>
