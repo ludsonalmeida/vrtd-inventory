@@ -65,7 +65,7 @@ export default function Footer() {
 
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Typography variant="body2" color="text.secondary">
-            © {new Date().getFullYear()} Porks Sobradinho – Todos os direitos reservados.
+            © {new Date().getFullYear()} Porks Sobradinho – Todos os direitos reservados. – CNPJ: 34.016.994.0001-56
           </Typography>
         </Box>
       </Container>
