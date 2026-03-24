@@ -384,7 +384,7 @@ const groupByCategory = (items, categories) =>
 function CardapioInner() {
   const [nav, setNav] = useState('inicio');
   const [unit, setUnit] = useState(() => localStorage.getItem('cardapio/unit') || SINGLE_UNIT);
-  const [musicOpen, setMusicOpen] = useState(false);
+  // musicOpen removed — using nav tab instead
 
   const savedFavIds = (() => {
     try { return JSON.parse(localStorage.getItem('cardapio/favs') || '[]'); }
@@ -1027,7 +1027,15 @@ function CardapioInner() {
             }}
           />
           <BottomNavigationAction label="Favoritos" value="fav" icon={<FavoriteBorderIcon />} />
-          <BottomNavigationAction label="Opções" value="menu" icon={<MenuIcon />} />
+          <BottomNavigationAction
+            label="Música"
+            value="musica"
+            icon={<Typography sx={{ fontSize: '1.2rem', lineHeight: 1 }}>🎵</Typography>}
+            sx={{
+              '& .MuiBottomNavigationAction-label': { color: nav === 'musica' ? palette.bannerRed : undefined },
+              '&.Mui-selected': { color: palette.bannerRed },
+            }}
+          />
         </BottomNavigation>
       </Box>
 
@@ -1444,80 +1452,25 @@ function CardapioInner() {
         </Box>
       </Modal>
 
-      {/* ── Pedir Música FAB ── */}
-      <Box
-        onClick={() => setMusicOpen(true)}
-        sx={{
+      {/* ── Pedir Música — fullscreen quando nav === 'musica' ── */}
+      {nav === 'musica' && (
+        <Box sx={{
           position: 'fixed',
-          bottom: 72,
-          right: 14,
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          bgcolor: palette.bannerRed,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 1200,
-          boxShadow: '0 3px 16px rgba(230,86,79,.45)',
-          transition: 'transform .2s',
-          '&:hover': { transform: 'scale(1.1)' },
-          animation: 'fabPulse 2.5s infinite',
-          '@keyframes fabPulse': {
-            '0%,100%': { boxShadow: '0 3px 16px rgba(230,86,79,.45)' },
-            '50%': { boxShadow: '0 3px 24px rgba(230,86,79,.65)' },
-          },
-        }}
-      >
-        <Typography sx={{ fontSize: '1.3rem' }}>🎵</Typography>
-      </Box>
-
-      {/* ── Music Widget Modal ── */}
-      <Modal open={musicOpen} onClose={() => setMusicOpen(false)}>
-        <Slide direction="up" in={musicOpen} mountOnEnter unmountOnExit>
-          <Box sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: { xs: '100%', sm: 420 },
-            maxHeight: '82vh',
-            bgcolor: '#0a0a0a',
-            borderRadius: '16px 16px 0 0',
-            overflow: 'hidden',
-            boxShadow: '0 -4px 30px rgba(0,0,0,.3)',
-          }}>
-            <Box sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              bgcolor: palette.bannerRed,
-              px: 2,
-              py: 1.2,
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography sx={{ fontSize: '1.1rem' }}>🎵</Typography>
-                <Typography sx={{ fontFamily: 'Alfa Slab One', fontSize: '.95rem', color: '#fff' }}>
-                  Pedir Música
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setMusicOpen(false)} sx={{ color: '#fff', p: .5 }}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Box sx={{ height: '70vh' }}>
-              <iframe
-                src="https://musica.sobradinhoporks.com.br"
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                title="Porks Radio"
-                allow="autoplay"
-              />
-            </Box>
-          </Box>
-        </Slide>
-      </Modal>
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 56,
+          zIndex: 1100,
+          bgcolor: '#0a0a0a',
+        }}>
+          <iframe
+            src="https://musica.sobradinhoporks.com.br"
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            title="Porks Radio"
+            allow="autoplay"
+          />
+        </Box>
+      )}
     </Box>
   );
 }
