@@ -1028,12 +1028,36 @@ function CardapioInner() {
           />
           <BottomNavigationAction label="Favoritos" value="fav" icon={<FavoriteBorderIcon />} />
           <BottomNavigationAction
-            label="Música"
+            label="Pedir Música"
             value="musica"
-            icon={<Typography sx={{ fontSize: '1.2rem', lineHeight: 1 }}>🎵</Typography>}
+            icon={
+              <Box sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: palette.bannerRed,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mt: -3,
+                boxShadow: '0 3px 16px rgba(230,86,79,.5)',
+                border: '3px solid #fff',
+                animation: 'musicPulse 2s infinite',
+                '@keyframes musicPulse': {
+                  '0%,100%': { boxShadow: '0 3px 16px rgba(230,86,79,.5)' },
+                  '50%': { boxShadow: '0 3px 28px rgba(230,86,79,.8)' },
+                },
+              }}>
+                <Typography sx={{ fontSize: '1.2rem', lineHeight: 1 }}>🎵</Typography>
+              </Box>
+            }
             sx={{
-              '& .MuiBottomNavigationAction-label': { color: nav === 'musica' ? palette.bannerRed : undefined },
-              '&.Mui-selected': { color: palette.bannerRed },
+              '& .MuiBottomNavigationAction-label': {
+                fontSize: '0.65rem !important',
+                fontWeight: '800 !important',
+                color: palette.bannerRed + ' !important',
+                mt: 0.5,
+              },
             }}
           />
         </BottomNavigation>
