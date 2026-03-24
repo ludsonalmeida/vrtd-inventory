@@ -1003,7 +1003,19 @@ function CardapioInner() {
       </Box>
 
       {/* Bottom Nav */}
-      <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
+      <Box sx={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: -12,
+          left: 0,
+          right: 0,
+          height: 12,
+          background: 'linear-gradient(to top, rgba(255,255,255,.95), transparent)',
+          pointerEvents: 'none',
+        },
+      }}>
         <BottomNavigation
           value={nav}
           onChange={(_, v) => {
@@ -1054,10 +1066,10 @@ function CardapioInner() {
                 mt: -3,
                 boxShadow: '0 3px 16px rgba(230,86,79,.5)',
                 border: '3px solid #fff',
-                animation: 'musicPulse 2s infinite',
-                '@keyframes musicPulse': {
-                  '0%,100%': { boxShadow: '0 3px 16px rgba(230,86,79,.5)' },
-                  '50%': { boxShadow: '0 3px 28px rgba(230,86,79,.8)' },
+                animation: 'musicGlow 3s ease-in-out infinite',
+                '@keyframes musicGlow': {
+                  '0%,100%': { boxShadow: '0 2px 12px rgba(230,86,79,.4)' },
+                  '50%': { boxShadow: '0 2px 20px rgba(230,86,79,.6)' },
                 },
               }}>
                 <Typography sx={{ fontSize: '1.2rem', lineHeight: 1 }}>🎵</Typography>
@@ -1494,17 +1506,13 @@ function CardapioInner() {
           onClick={() => { setMusicTooltip(false); sessionStorage.setItem('musicTooltipDismissed', '1'); setNav('musica'); }}
           sx={{
             position: 'fixed',
-            bottom: 64,
+            bottom: 68,
             right: 8,
             zIndex: 1300,
             cursor: 'pointer',
-            animation: 'tooltipBounce 1s ease-in-out infinite alternate, tooltipFadeIn .4s ease',
-            '@keyframes tooltipBounce': {
-              '0%': { transform: 'translateY(0)' },
-              '100%': { transform: 'translateY(-6px)' },
-            },
+            animation: 'tooltipFadeIn .5s ease',
             '@keyframes tooltipFadeIn': {
-              '0%': { opacity: 0, transform: 'translateY(10px)' },
+              '0%': { opacity: 0, transform: 'translateY(8px)' },
               '100%': { opacity: 1, transform: 'translateY(0)' },
             },
           }}
@@ -1538,24 +1546,29 @@ function CardapioInner() {
       )}
 
       {/* ── Pedir Música — fullscreen quando nav === 'musica' ── */}
-      {nav === 'musica' && (
-        <Box sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 56,
-          zIndex: 1100,
-          bgcolor: '#0a0a0a',
-        }}>
+      <Box sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 56,
+        zIndex: 1100,
+        bgcolor: '#0a0a0a',
+        transition: 'opacity .3s ease, transform .3s ease',
+        opacity: nav === 'musica' ? 1 : 0,
+        transform: nav === 'musica' ? 'translateY(0)' : 'translateY(20px)',
+        pointerEvents: nav === 'musica' ? 'auto' : 'none',
+        borderBottom: '1px solid rgba(255,255,255,.08)',
+      }}>
+        {nav === 'musica' && (
           <iframe
             src="https://musica.sobradinhoporks.com.br"
             style={{ width: '100%', height: '100%', border: 'none' }}
             title="Porks Radio"
             allow="autoplay"
           />
-        </Box>
-      )}
+        )}
+      </Box>
     </Box>
   );
 }
