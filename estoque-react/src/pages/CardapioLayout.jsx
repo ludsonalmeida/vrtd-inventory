@@ -384,7 +384,19 @@ const groupByCategory = (items, categories) =>
 function CardapioInner() {
   const [nav, setNav] = useState('inicio');
   const [unit, setUnit] = useState(() => localStorage.getItem('cardapio/unit') || SINGLE_UNIT);
-  // musicOpen removed — using nav tab instead
+  const [musicTooltip, setMusicTooltip] = useState(() => {
+    return !sessionStorage.getItem('musicTooltipDismissed');
+  });
+
+  useEffect(() => {
+    if (musicTooltip) {
+      const timer = setTimeout(() => {
+        setMusicTooltip(false);
+        sessionStorage.setItem('musicTooltipDismissed', '1');
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [musicTooltip]);
 
   const savedFavIds = (() => {
     try { return JSON.parse(localStorage.getItem('cardapio/favs') || '[]'); }
@@ -1475,6 +1487,55 @@ function CardapioInner() {
           )}
         </Box>
       </Modal>
+
+      {/* ── Music Tooltip ── */}
+      {musicTooltip && nav !== 'musica' && (
+        <Box
+          onClick={() => { setMusicTooltip(false); sessionStorage.setItem('musicTooltipDismissed', '1'); setNav('musica'); }}
+          sx={{
+            position: 'fixed',
+            bottom: 64,
+            right: 8,
+            zIndex: 1300,
+            cursor: 'pointer',
+            animation: 'tooltipBounce 1s ease-in-out infinite alternate, tooltipFadeIn .4s ease',
+            '@keyframes tooltipBounce': {
+              '0%': { transform: 'translateY(0)' },
+              '100%': { transform: 'translateY(-6px)' },
+            },
+            '@keyframes tooltipFadeIn': {
+              '0%': { opacity: 0, transform: 'translateY(10px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            },
+          }}
+        >
+          <Box sx={{
+            bgcolor: palette.bannerRed,
+            color: '#fff',
+            px: 2,
+            py: 1,
+            borderRadius: '12px 12px 4px 12px',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            maxWidth: 200,
+            boxShadow: '0 4px 20px rgba(230,86,79,.4)',
+            position: 'relative',
+          }}>
+            🎵 Que tal pedir uma música pro nosso vinil enquanto escolhe o que comer?
+            <Box sx={{
+              position: 'absolute',
+              bottom: -6,
+              right: 20,
+              width: 0,
+              height: 0,
+              borderLeft: '6px solid transparent',
+              borderRight: '6px solid transparent',
+              borderTop: `6px solid ${palette.bannerRed}`,
+            }} />
+          </Box>
+        </Box>
+      )}
 
       {/* ── Pedir Música — fullscreen quando nav === 'musica' ── */}
       {nav === 'musica' && (
