@@ -30,6 +30,9 @@ import DialogActions from '@mui/material/DialogActions';
 import LocalDrinkIcon from '@mui/icons-material/LocalDrink';
 import IcecreamIcon from '@mui/icons-material/Icecream'; // ícone de sorvete para "Doces"
 import CloseIcon from '@mui/icons-material/Close';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import Fab from '@mui/material/Fab';
+import Slide from '@mui/material/Slide';
 
 
 // Ícones para categorias específicas
@@ -447,6 +450,7 @@ export default function CardapioPage() {
   // **Modal state**
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [musicOpen, setMusicOpen] = useState(false);
   const [mexModalOpen, setMexModalOpen] = useState(false);
 
   const openModal = (item) => {
@@ -958,7 +962,83 @@ export default function CardapioPage() {
         </DialogActions>
       </Dialog>
 
-  
+      {/* ── Pedir Música FAB ── */}
+      <Fab
+        onClick={() => setMusicOpen(true)}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 72, sm: 24 },
+          right: 16,
+          bgcolor: '#C0201A',
+          color: '#fff',
+          zIndex: 1200,
+          boxShadow: '0 4px 20px rgba(192,32,26,.4)',
+          '&:hover': { bgcolor: '#a01a15' },
+          animation: 'pulse-music 2s infinite',
+          '@keyframes pulse-music': {
+            '0%': { boxShadow: '0 4px 20px rgba(192,32,26,.4)' },
+            '50%': { boxShadow: '0 4px 30px rgba(192,32,26,.6)' },
+            '100%': { boxShadow: '0 4px 20px rgba(192,32,26,.4)' },
+          },
+        }}
+      >
+        <MusicNoteIcon />
+      </Fab>
+
+      {/* ── Music Widget Modal ── */}
+      <Dialog
+        open={musicOpen}
+        onClose={() => setMusicOpen(false)}
+        TransitionComponent={Slide}
+        TransitionProps={{ direction: 'up' }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#0a0a0a',
+            borderRadius: '16px 16px 0 0',
+            position: 'fixed',
+            bottom: 0,
+            m: 0,
+            maxHeight: '85vh',
+            width: '100%',
+            maxWidth: { xs: '100%', sm: 480 },
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          bgcolor: '#C0201A',
+          color: '#fff',
+          py: 1.5,
+          px: 2,
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <MusicNoteIcon fontSize="small" />
+            <Typography sx={{ fontFamily: 'Alfa Slab One', fontSize: '1rem' }}>
+              Pedir Musica
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setMusicOpen(false)} sx={{ color: '#fff' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, height: '70vh' }}>
+          <iframe
+            src="https://musica.sobradinhoporks.com.br"
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              borderRadius: '0 0 16px 16px',
+            }}
+            title="Porks Radio"
+            allow="autoplay"
+          />
+        </DialogContent>
+      </Dialog>
 
     </>
   );
